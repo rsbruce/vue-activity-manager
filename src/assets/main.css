@@ -1,0 +1,101 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --color-intense: ;
+    --color-dark: ;
+    --color-main: ;
+    --color-light: ;
+    --color-general: ;
+    --color-trash: ;
+}
+
+[data-model-theme='amber'] {
+  @apply text-black;
+  --color-dark: #b45309;
+  --color-intense: #f59e0b;
+  --color-main: #fcd34d;
+  --color-light: #fef3c7;
+  --color-general: #6ee7b7;
+  --color-trash: #d1d5db;
+  --link-color: #2563eb;
+  --link-hover-color: #1e40af;
+}
+
+[data-model-theme='purple'] {
+  @apply text-black;
+  --color-dark: #7e22ce;
+  --color-intense: #a855f7;
+  --color-main: #d8b4fe;
+  --color-light: #f3e8ff;
+  --color-general: #93c5fd;
+  --color-trash: #d1d5db;
+  --link-color: #374151;
+  --link-hover-color: #111827;
+}
+
+[data-model-theme='rose'] {
+  @apply text-black;
+  --color-dark: #be123c;
+  --color-intense: #f43f5e;
+  --color-main: #fda4af;
+  --color-light: #ffe4e6;
+  --color-general: #93c5fd;
+  --color-trash: #d1d5db;
+  --link-color: #374151;
+  --link-hover-color: #111827;
+}
+
+[data-model-theme='green'] {
+  @apply text-black;
+  --color-dark: #047857;
+  --color-intense: #10b981;
+  --color-main: #6ee7b7;
+  --color-light: #d1fae5;
+  --color-general: #6ee7b7;
+  --color-trash: #d1d5db;
+  --link-color: #374151;
+  --link-hover-color: #111827;
+}
+
+[data-model-theme='gray'] {
+  @apply text-black;
+  --color-dark: #64748b;
+  --color-intense: #cbd5e1;
+  --color-main: #f1f5f9;
+  --color-light: #f8fafc;
+  --color-general: #cbd5e1;
+  --color-trash: #f87171;
+  --link-color: #374151;
+  --link-hover-color: #111827;
+}
+
+.scrollbar-thin {
+   scrollbar-width: thin;
+   scrollbar-gutter: stable;
+}
+
+.card {
+  @apply bg-main rounded-md p-2 text-black;
+}
+
+button {
+  cursor: pointer;
+}
+
+input {
+  @apply bg-white;
+}
+
+.prose * {
+    margin-top: 0.25rem !important;
+    margin-bottom: 0.25rem !important;
+}
