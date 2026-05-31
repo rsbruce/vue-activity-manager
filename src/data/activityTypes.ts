@@ -22,18 +22,18 @@ export async function findById(id: string): Promise<ActivityType | null> {
 export async function create(input: {
   name: string
   theme: string
-  polarity?: boolean | null
+  is_negative?: boolean | null
 }): Promise<ActivityType|undefined> {
   const rows = await query<ActivityType>(
-    'INSERT INTO activity_types (name, theme, polarity) VALUES (?, ?, ?) RETURNING *',
-    [input.name, input.theme, input.polarity ?? null],
+    'INSERT INTO activity_types (name, theme, is_negative) VALUES (?, ?, ?) RETURNING *',
+    [input.name, input.theme, input.is_negative ?? null],
   )
   return rows[0]
 }
 
 export async function update(
   id: string,
-  input: { name?: string; theme?: string; polarity?: boolean | null },
+  input: { name?: string; theme?: string; is_negative?: boolean | null },
 ): Promise<void> {
   const sets: string[] = []
   const params: unknown[] = []
@@ -45,9 +45,9 @@ export async function update(
     sets.push('theme = ?')
     params.push(input.theme)
   }
-  if (input.polarity !== undefined) {
-    sets.push('polarity = ?')
-    params.push(input.polarity)
+  if (input.is_negative !== undefined) {
+    sets.push('is_negative = ?')
+    params.push(input.is_negative)
   }
   if (sets.length === 0) return
   params.push(id)

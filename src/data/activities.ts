@@ -83,3 +83,7 @@ export async function update(
 export async function destroy(id: string): Promise<void> {
   await exec('UPDATE activities SET deleted_at = unixepoch() WHERE id = ?', [id])
 }
+
+export async function restore(id: string): Promise<void> {
+  await exec('UPDATE activities SET deleted_at = NULL WHERE id = ?', [id])
+}

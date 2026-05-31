@@ -12,7 +12,7 @@ const SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS "activity_types"(
   "id" text primary key not null default (lower(hex(randomblob(16)))),
   "name" varchar not null,
-  "polarity" boolean,
+  "is_negative" boolean,
   "theme" varchar not null,
   "created_at" integer default (unixepoch()),
   "updated_at" integer default (unixepoch()),
@@ -315,7 +315,7 @@ export function useSyncEngine() {
 
     const promiser = await (sqlite3Worker1Promiser as unknown as () => Promise<Worker1Promiser>)()
 
-    const filename = `file:sync-poc-${userId}-v5.sqlite3?vfs=opfs`
+    const filename = `file:sync-poc-${userId}-v6.sqlite3?vfs=opfs`
     adapter = await BrowserSQLiteAdapter.open(promiser, filename)
     await adapter.exec(SCHEMA_SQL)
 

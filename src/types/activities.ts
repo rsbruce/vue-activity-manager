@@ -1,7 +1,7 @@
 export type ActivityType = {
   id: string
   name: string
-  polarity: boolean | null
+  is_negative: boolean | null
   theme: string
   created_at: number
   updated_at: number
