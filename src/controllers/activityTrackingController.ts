@@ -12,31 +12,20 @@ type Data = {
     stats: Record<string, DayStats>
 }
 
-function isoDate(d: Date): string {
-    const y = d.getFullYear()
-    const m = String(d.getMonth() + 1).padStart(2, '0')
-    const day = String(d.getDate()).padStart(2, '0')
-    return `${y}-${m}-${day}`
-}
-
-function daysAgo(n: number): Date {
-    const d = new Date()
-    d.setHours(0, 0, 0, 0)
-    d.setDate(d.getDate() - n)
-    return d
-}
-
 const load = async (): Promise<Data> => {
     const activityTypeGroups = await getTypeGroups()
 
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
     const dates: string[] = []
-    for (let i = 6; i >= 0; i--) dates.push(isoDate(daysAgo(i)))
+    for (let i = 6; i >= 0; i--) dates.push(today.addDays(-i).isoDate())
 
-    const aWeekAgo = isoDate(daysAgo(7))
-    const fiveWeeksAgo = isoDate(daysAgo(35))
-    const today = isoDate(daysAgo(0))
+    const aWeekAgo = today.addDays(-7).isoDate()
+    const fiveWeeksAgo = today.addDays(-35).isoDate()
+    const todayStr = today.isoDate()
 
-    const rows = await getInRange(fiveWeeksAgo, today)
+    const rows = await getInRange(fiveWeeksAgo, todayStr)
 
     const timetable: Record<string, Record<string, boolean>> = {}
     for (const date of dates) timetable[date] = {}
