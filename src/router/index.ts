@@ -8,7 +8,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'Edit Activities',
-      component: () => import('../views/ActivitiesView.vue'),
+      component: () => import('../views/pages/ActivitiesEdit.vue'),
       beforeEnter: activities.beforeEnter,
       props: activities.props
     },
