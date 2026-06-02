@@ -22,9 +22,9 @@ const activityTypes = computed(() =>
         <ActivityForm :activityTypes="activityTypes" />
 
         <template v-if="activityTypeGroups.length">
-            <div class="flex gap-4">
+            <div class="grid md:grid-cols-3 gap-2">
                 <template v-for="group in activityTypeGroups" :key="group.activityType.id">
-                    <div class="bg-main rounded-md p-2 text-black w-72" :data-model-theme="group.activityType.theme">
+                    <div class="bg-main rounded-md p-2 text-black" :data-model-theme="group.activityType.theme">
                         <h3 class="text-xl mb-2 underline">
                             <RouterLink :to="`/activity-types/${group.activityType.id}/edit`">{{ group.activityType.name }}</RouterLink>
                         </h3>
