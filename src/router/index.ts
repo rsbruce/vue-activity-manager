@@ -1,5 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import activities from '@/controllers/activitiesController.ts'
+import eventsController from '@/controllers/eventsController.ts'
+import eventShowController from '@/controllers/eventShowController.ts'
 import activityTracking from '@/controllers/activityTrackingController.ts'
 import activityTypes from '@/controllers/activityTypesController.ts'
 import editActivity from '@/controllers/editActivityController.ts'
@@ -13,6 +15,20 @@ const router = createRouter({
       path: '/',
       name: 'Home',
       component: () => import('../views/pages/HomeView.vue'),
+    },
+    {
+      path: '/events',
+      name: 'Events',
+      component: () => import('../views/pages/Events.vue'),
+      beforeEnter: eventsController.beforeEnter,
+      props: eventsController.props
+    },
+    {
+      path: '/events/:id',
+      name: 'EventShow',
+      component: () => import('../views/pages/EventShow.vue'),
+      beforeEnter: eventShowController.beforeEnter,
+      props: eventShowController.props
     },
     {
       path: '/activities/index',

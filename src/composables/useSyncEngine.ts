@@ -131,7 +131,6 @@ CREATE TABLE IF NOT EXISTS "person_in_group"(
 CREATE TABLE IF NOT EXISTS "events"(
   "id" text primary key not null default (lower(hex(randomblob(16)))),
   "project_id" text,
-  "objective_id" text,
   "name" varchar not null,
   "start_datetime" datetime not null,
   "end_datetime" datetime not null,

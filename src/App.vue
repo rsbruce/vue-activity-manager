@@ -43,6 +43,7 @@ const route = useRoute()
   <div class="container max-w-5xl mx-auto pt-4">
     <nav class="flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
         <RouterLink to="/activities/index">Habits</RouterLink>
+        <RouterLink to="/events">Events</RouterLink>
     </nav>
     <div v-if="!isReady" class="boot">
       <p>{{ initError || status }}</p>
