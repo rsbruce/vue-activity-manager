@@ -18,7 +18,7 @@ const formatDate = (dateStr: string | null) => {
     <div class="py-6 space-y-4">
         <div class="flex gap-4 items-center">
             <RouterLink to="/events">Back</RouterLink>
-            <!-- <RouterLink :to="`/events/${event.id}/edit`">Edit</RouterLink> -->
+            <RouterLink :to="`/events/${event.id}/edit`">Edit</RouterLink>
         </div>
 
         <h2 class="text-2xl">{{ event.name }}</h2>

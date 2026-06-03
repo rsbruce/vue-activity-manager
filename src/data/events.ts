@@ -1,6 +1,14 @@
 import { query, exec, transaction } from '@/db'
 import type { Event } from '@/types/events'
 import type { Person } from '@/types/people'
+import { update } from './utils'
+
+const columns = [
+    'name',
+    'start_datetime',
+    'end_datetime',
+    'project_id'
+]
 
 export async function createEvent(input: {
     name: string, project_id?: string, start_datetime: string, end_datetime: string, person_ids: string[]
@@ -90,4 +98,27 @@ export async function getEvent(id: string): Promise<Event | undefined> {
         [id]
     )
     return events[0]
+}
+
+export async function updateEvent(id: string, data: Record<string, unknown>, personIds?: string[]): Promise<void> {
+    const txn = async () => {
+        await update('events', columns, id, data)
+        if (personIds && personIds.length) {
+            await updateAttendees(id, personIds)
+        }
+    }
+    
+    await transaction(txn)
+}
+
+export async function updateAttendees(eventId: string, personIds: string[]): Promise<void> {
+    await exec(`UPDATE person_at_event SET deleted_at = unixepoch() WHERE event_id = ? AND person_id NOT IN (${personIds.map(pid => '?').join(', ')})`, [eventId, ...personIds])
+
+    for(let i=0; i < personIds.length; i++) {
+        await exec(`INSERT INTO person_at_event (person_id, event_id, deleted_at) 
+            VALUES (?, ?, NULL) 
+            ON CONFLICT(person_id, event_id) 
+            DO UPDATE SET deleted_at = NULL
+        `, [personIds[i], eventId])
+    }
 }

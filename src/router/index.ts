@@ -1,11 +1,12 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import activities from '@/controllers/activitiesController.ts'
-import eventsController from '@/controllers/eventsController.ts'
-import eventShowController from '@/controllers/eventShowController.ts'
-import activityTracking from '@/controllers/activityTrackingController.ts'
-import activityTypes from '@/controllers/activityTypesController.ts'
-import editActivity from '@/controllers/editActivityController.ts'
-import editActivityType from '@/controllers/editActivityTypeController.ts'
+import { eventsIndexController, eventShowController, editEventController } from '@/controllers/eventsController.ts'
+import {
+  activitiesIndexController,
+  activityTrackingController,
+  activityTypesController,
+  editActivityController,
+  editActivityTypeController,
+} from '@/controllers/activities.ts'
 import { ready } from '@/composables/useSyncEngine'
 
 const router = createRouter({
@@ -18,52 +19,59 @@ const router = createRouter({
     },
     {
       path: '/events',
-      name: 'Events',
+      name: 'Events Index',
       component: () => import('../views/pages/Events.vue'),
-      beforeEnter: eventsController.beforeEnter,
-      props: eventsController.props
+      beforeEnter: eventsIndexController.beforeEnter,
+      props: eventsIndexController.props
     },
     {
       path: '/events/:id',
-      name: 'EventShow',
+      name: 'Event',
       component: () => import('../views/pages/EventShow.vue'),
       beforeEnter: eventShowController.beforeEnter,
       props: eventShowController.props
     },
     {
+      path: '/events/:id/edit',
+      name: 'Edit Event',
+      component: () => import('../views/pages/EditEvent.vue'),
+      beforeEnter: editEventController.beforeEnter,
+      props: editEventController.props
+    },
+    {
       path: '/activities/index',
       name: 'Edit Activities',
       component: () => import('../views/pages/ActivitiesEdit.vue'),
-      beforeEnter: activities.beforeEnter,
-      props: activities.props
+      beforeEnter: activitiesIndexController.beforeEnter,
+      props: activitiesIndexController.props
     },
     {
       path: '/activities/tracking',
       name: 'Activity Tracking',
       component: () => import('../views/pages/ActivityTracking.vue'),
-      beforeEnter: activityTracking.beforeEnter,
-      props: activityTracking.props
+      beforeEnter: activityTrackingController.beforeEnter,
+      props: activityTrackingController.props
     },
     {
       path: '/activities/types',
       name: 'Activity Types',
       component: () => import('../views/pages/ActivityTypes.vue'),
-      beforeEnter: activityTypes.beforeEnter,
-      props: activityTypes.props
+      beforeEnter: activityTypesController.beforeEnter,
+      props: activityTypesController.props
     },
     {
       path: '/activities/:id/edit',
       name: 'Edit Activity',
       component: () => import('../views/pages/EditActivity.vue'),
-      beforeEnter: editActivity.beforeEnter,
-      props: editActivity.props
+      beforeEnter: editActivityController.beforeEnter,
+      props: editActivityController.props
     },
     {
       path: '/activity-types/:id/edit',
       name: 'Edit Activity Type',
       component: () => import('../views/pages/EditActivityType.vue'),
-      beforeEnter: editActivityType.beforeEnter,
-      props: editActivityType.props
+      beforeEnter: editActivityTypeController.beforeEnter,
+      props: editActivityTypeController.props
     },
   ],
 })
