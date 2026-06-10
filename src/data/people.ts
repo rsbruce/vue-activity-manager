@@ -1,6 +1,9 @@
 import { query, exec, transaction } from '@/db'
 import type { Event } from '@/types/events'
 import type { Person } from '@/types/people'
+import { update } from './utils'
+
+const columns = ['firstname', 'lastname', 'dob']
 
 export async function getAllPeople(): Promise<Person[]>
 {
@@ -65,4 +68,44 @@ export async function createPerson(input: {
     const person = rows[0];
 
     return person;
+}
+
+export async function getPerson(id: string): Promise<Person | undefined> {
+    const rows = await query<Person>(
+        'SELECT * FROM people WHERE id = ? AND deleted_at IS NULL',
+        [id]
+    )
+
+    const person = rows[0]
+    if (!person) return undefined
+
+    person.events = await query<{ id: string; name: string; start_datetime: string | null }>(
+        `SELECT events.id, events.name, events.start_datetime
+        FROM events INNER JOIN person_at_event ON person_at_event.event_id = events.id
+            WHERE person_at_event.person_id = ?
+            AND events.deleted_at IS NULL
+            AND person_at_event.deleted_at IS NULL
+            ORDER BY events.start_datetime DESC
+        `, [id]
+    )
+
+    person.groups = await query<{ id: string; name: string }>(
+        `SELECT people_groups.id, people_groups.name
+        FROM people_groups INNER JOIN person_in_group ON person_in_group.people_group_id = people_groups.id
+            WHERE person_in_group.person_id = ?
+            AND people_groups.deleted_at IS NULL
+            AND person_in_group.deleted_at IS NULL
+            ORDER BY people_groups.name
+        `, [id]
+    )
+
+    if (person.dob) {
+        person.dob = (new Date(person.dob)).isoDate()
+    }
+
+    return person
+}
+
+export async function updatePerson(id: string, data: Record<string, unknown>): Promise<void> {
+    await update('people', columns, id, data)
 }

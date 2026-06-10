@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import type { Activity, ActivityType, ActivityWithType } from '@/types/activities'
 import { create, update, destroy, restore } from '@/data/activities'
 import { refreshCurrent } from '@/router/defineController'
+import DeleteRestoreButton from './DeleteRestoreButton.vue'
 
 const props = defineProps<{
     activity?: ActivityWithType | Activity
@@ -87,15 +88,12 @@ async function restoreActivity(id: string) {
                 </button>
             </div>
         </form>
-        <template v-if="activity && !activity.deleted_at">
-            <form @submit.prevent="() => trash(activity!.id)" class="w-full">
-                <button type="submit" class="bg-red-500 text-white rounded-md border-2 border-black mt-2 cursor-pointer w-full">Trash</button>
-            </form>
-        </template>
-        <template v-if="activity && activity.deleted_at">
-            <form @submit.prevent="() => restoreActivity(activity!.id)" class="w-full">
-                <button type="submit" class="bg-purple-500 text-white rounded-md border-2 border-black mt-2 cursor-pointer w-full">Restore</button>
-            </form>
-        </template>
+        <DeleteRestoreButton
+            v-if="activity"
+            :deleted-at="activity.deleted_at ?? null"
+            class="mt-2"
+            @trash="() => trash(activity!.id)"
+            @restore="() => restoreActivity(activity!.id)"
+        />
     </div>
 </template>

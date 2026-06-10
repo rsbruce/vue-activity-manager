@@ -4,6 +4,7 @@ import type { Person } from '@/types/people';
 import { computed, ref, watch, reactive } from 'vue';
 import EventAttendees from '../components/EventAttendees.vue';
 import EventDateTimeInputs from '../components/EventDateTimeInputs.vue';
+import DeleteRestoreButton from '../components/DeleteRestoreButton.vue';
 import { softDelete } from '@/data/utils.ts';
 import { updateAttendees, updateEvent } from '@/data/events.ts';
 import { useRouter } from 'vue-router';
@@ -96,9 +97,7 @@ watch(attendeeIds, (value) => {
                     <EventDateTimeInputs v-model:date="date" v-model:startTime="startTime" v-model:endTime="endTime" :nextDay="isNextDay" @update:nextDay="onNextDayChange" />
                     <button type="submit" :disabled="isTimeInvalid" class="bg-sky-500 text-white rounded-md border-2 border-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">Update</button>
                 </form>
-                <template v-if="!event.deleted_at">
-                    <button @click="trash" class="bg-red-500 text-white rounded-md border-2 border-black w-full mt-2 cursor-pointer">Trash</button>
-                </template>
+                <DeleteRestoreButton :deleted-at="event.deleted_at" class="mt-2" @trash="trash" />
             </div>
             <EventAttendees :people="people" :attendee-ids="attendeeIds" @update:attendeeIds="ids => attendeeIds = ids"/>
         </div>

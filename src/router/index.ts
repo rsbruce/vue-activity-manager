@@ -8,7 +8,12 @@ import {
   editActivityTypeController,
 } from '@/controllers/activities.ts'
 import { ready } from '@/composables/useSyncEngine'
-import { peopleIndexController } from '@/controllers/peopleController.ts'
+import { peopleIndexController, personShowController, personEditController } from '@/controllers/peopleController.ts'
+import {
+  peopleGroupsIndexController,
+  newPeopleGroupController,
+  peopleGroupShowController,
+} from '@/controllers/peopleGroups.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,6 +29,41 @@ const router = createRouter({
       component: () => import('../views/pages/People.vue'),
       beforeEnter: peopleIndexController.beforeEnter,
       props: peopleIndexController.props
+    },
+    {
+      path: '/people/groups/new',
+      name: 'New People Group',
+      component: () => import('../views/pages/CreatePeopleGroup.vue'),
+      beforeEnter: newPeopleGroupController.beforeEnter,
+      props: newPeopleGroupController.props
+    },
+    {
+      path: '/people/groups',
+      name: 'People Groups',
+      component: () => import('../views/pages/PeopleGroups.vue'),
+      beforeEnter: peopleGroupsIndexController.beforeEnter,
+      props: peopleGroupsIndexController.props
+    },
+    {
+      path: '/people/groups/:id',
+      name: 'People Group',
+      component: () => import('../views/pages/PeopleGroupShow.vue'),
+      beforeEnter: peopleGroupShowController.beforeEnter,
+      props: peopleGroupShowController.props
+    },
+    {
+      path: '/people/:id',
+      name: 'Person',
+      component: () => import('../views/pages/PersonShow.vue'),
+      beforeEnter: personShowController.beforeEnter,
+      props: personShowController.props
+    },
+    {
+      path: '/people/:id/edit',
+      name: 'Edit Person',
+      component: () => import('../views/pages/EditPerson.vue'),
+      beforeEnter: personEditController.beforeEnter,
+      props: personEditController.props
     },
     {
       path: '/events',

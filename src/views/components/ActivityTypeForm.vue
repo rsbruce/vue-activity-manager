@@ -3,6 +3,7 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import type { ActivityType } from '@/types/activities'
 import { create, update, trash, restore } from '@/data/activityTypes'
+import DeleteRestoreButton from './DeleteRestoreButton.vue'
 
 const themeOptions = ['amber', 'purple', 'rose', 'gray', 'green']
 
@@ -90,15 +91,12 @@ async function restoreType(id: string) {
                 </button>
             </div>
         </form>
-        <template v-if="activityType && !activityType.deleted_at">
-            <form @submit.prevent="() => trashType(activityType!.id)">
-                <button type="submit" class="bg-red-500 text-white rounded-md border-2 border-black w-72 mt-2 cursor-pointer">Trash</button>
-            </form>
-        </template>
-        <template v-if="activityType && activityType.deleted_at">
-            <form @submit.prevent="() => restoreType(activityType!.id)">
-                <button type="submit" class="bg-purple-500 text-white rounded-md border-2 border-black w-72 mt-2 cursor-pointer">Restore</button>
-            </form>
-        </template>
+        <DeleteRestoreButton
+            v-if="activityType"
+            :deleted-at="activityType.deleted_at ?? null"
+            class="w-72 mt-2"
+            @trash="() => trashType(activityType!.id)"
+            @restore="() => restoreType(activityType!.id)"
+        />
     </div>
 </template>
