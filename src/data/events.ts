@@ -103,16 +103,22 @@ export async function getEvent(id: string): Promise<Event | undefined> {
 export async function updateEvent(id: string, data: Record<string, unknown>, personIds?: string[]): Promise<void> {
     const txn = async () => {
         await update('events', columns, id, data)
-        if (personIds && personIds.length) {
+        if (personIds !== undefined) {
             await updateAttendees(id, personIds)
         }
     }
-    
+
     await transaction(txn)
 }
 
 export async function updateAttendees(eventId: string, personIds: string[]): Promise<void> {
-    await exec(`UPDATE person_at_event SET deleted_at = unixepoch() WHERE event_id = ? AND person_id NOT IN (${personIds.map(pid => '?').join(', ')})`, [eventId, ...personIds])
+    // Soft-delete attendees no longer present. With no attendees, remove them all
+    // (a bare `NOT IN ()` is invalid SQL).
+    if (personIds.length) {
+        await exec(`UPDATE person_at_event SET deleted_at = unixepoch() WHERE event_id = ? AND person_id NOT IN (${personIds.map(() => '?').join(', ')})`, [eventId, ...personIds])
+    } else {
+        await exec('UPDATE person_at_event SET deleted_at = unixepoch() WHERE event_id = ?', [eventId])
+    }
 
     for(let i=0; i < personIds.length; i++) {
         await exec(`INSERT INTO person_at_event (person_id, event_id, deleted_at) 
