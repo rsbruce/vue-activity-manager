@@ -185,3 +185,61 @@ export async function setToDoListProject(projectId: string): Promise<void> {
         await exec('INSERT INTO to_do_list_project (to_do_list_project_id) VALUES (?)', [projectId])
     }
 }
+
+/** All non-deleted projects in non-deleted categories (optionally excluding one),
+ * each with objectives→tasks + derived status. For the Planner. */
+export async function getProjectsForPlanner(excludeId: string | null): Promise<Project[]> {
+    const projects = await query<Project>(
+        `SELECT *, ${STATUS_SQL} as status
+        FROM projects
+        WHERE deleted_at IS NULL
+            AND project_category_id IN (SELECT id FROM project_categories WHERE deleted_at IS NULL)
+            ${excludeId ? 'AND id != ?' : ''}
+        ORDER BY "order"`,
+        excludeId ? [excludeId] : [],
+    )
+    const byProject = await loadObjectivesWithTasks(projects.map((p) => p.id))
+    for (const p of projects) p.objectives = byProject.get(p.id) ?? []
+    return projects
+}
+
+/** The to-do-list project with objectives that are incomplete or completed today
+ * (each with their tasks). */
+export async function getToDoListProject(id: string): Promise<Project | undefined> {
+    const rows = await query<Project>(
+        `SELECT *, ${STATUS_SQL} as status FROM projects WHERE id = ? AND deleted_at IS NULL`,
+        [id],
+    )
+    const project = rows[0]
+    if (!project) return undefined
+
+    const todayStartUnix = Math.floor(new Date().setHours(0, 0, 0, 0) / 1000)
+    const objectives = await query<Objective>(
+        `SELECT * FROM objectives
+        WHERE project_id = ? AND deleted_at IS NULL
+            AND (completed_at IS NULL OR completed_at > ?)
+        ORDER BY "order"`,
+        [id, todayStartUnix],
+    )
+
+    const objIds = objectives.map((o) => o.id)
+    const tasksByObjective = new Map<string, Task[]>()
+    if (objIds.length) {
+        const tasks = await query<Task>(
+            `SELECT * FROM tasks WHERE objective_id IN (${objIds.map(() => '?').join(', ')}) AND deleted_at IS NULL ORDER BY "order"`,
+            objIds,
+        )
+        for (const t of tasks) {
+            t.has_description = hasDescription(t.description)
+            const list = tasksByObjective.get(t.objective_id ?? '') ?? []
+            list.push(t)
+            tasksByObjective.set(t.objective_id ?? '', list)
+        }
+    }
+    for (const o of objectives) {
+        o.tasks = tasksByObjective.get(o.id) ?? []
+        o.has_description = hasDescription(o.description)
+    }
+    project.objectives = objectives
+    return project
+}

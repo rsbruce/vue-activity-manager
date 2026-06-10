@@ -42,6 +42,7 @@ const route = useRoute()
 <template>
   <div class="container max-w-5xl mx-auto pt-4">
     <nav class="flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
+        <RouterLink to="/planner">Planner</RouterLink>
         <RouterLink to="/timetable">Timetable</RouterLink>
         <RouterLink to="/project-categories">Projects</RouterLink>
         <RouterLink to="/activities/index">Habits</RouterLink>

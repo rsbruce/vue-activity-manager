@@ -26,6 +26,7 @@ import {
   taskShowController,
   taskEditController,
 } from '@/controllers/projects.ts'
+import { plannerController } from '@/controllers/planner.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -34,6 +35,13 @@ const router = createRouter({
       path: '/',
       name: 'Home',
       component: () => import('../views/pages/HomeView.vue'),
+    },
+    {
+      path: '/planner',
+      name: 'Planner',
+      component: () => import('../views/pages/Planner.vue'),
+      beforeEnter: plannerController.beforeEnter,
+      props: plannerController.props
     },
     {
       path: '/timetable',

@@ -55,3 +55,11 @@ export type Task = {
     objective?: Objective
     has_description?: boolean
 }
+
+export type ObjectiveWithTasks = Objective & { tasks: Task[] }
+
+export type ProjectOnDayEntry = { project_id: string }
+
+// dateYmd -> project_id -> entry
+export type ProjectOnDayData = Record<string, Record<string, ProjectOnDayEntry>>
+
