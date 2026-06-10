@@ -4,18 +4,6 @@ import type { Person } from '@/types/people'
 
 export async function getAllPeople(): Promise<Person[]>
 {
-    // const people = await query<Person>(
-    //     `SELECT 
-    //         people.*,
-    //         (SELECT COUNT(*) FROM events 
-    //             INNER JOIN person_at_event ON person_at_event.event_id = events.id 
-    //             WHERE people.id = person_at_event.person_id 
-    //             AND events.deleted_at IS NULL
-    //             AND people.deleted_at IS NULL
-    //         ) as events_count
-    //     FROM people WHERE people.deleted_at IS NULL
-    //     `)
-
     const people = await query<Person>(`
         SELECT people.*, 
         (SELECT count(*) 
@@ -63,4 +51,18 @@ export async function getAllPeople(): Promise<Person[]>
     `)
 
     return people
+}
+
+export async function createPerson(input: {
+    firstname: string, lastname: string, dob?: Date
+}): Promise<Event | undefined>
+{
+    const rows = await query<Event>(
+        'INSERT INTO people (firstname, lastname, dob) VALUES (?, ?, ?) RETURNING *',
+        [input.firstname, input.lastname, input.dob?.isoDate()]
+    )
+
+    const person = rows[0];
+
+    return person;
 }

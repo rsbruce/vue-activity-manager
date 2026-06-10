@@ -8,6 +8,7 @@ import {
   editActivityTypeController,
 } from '@/controllers/activities.ts'
 import { ready } from '@/composables/useSyncEngine'
+import { peopleIndexController } from '@/controllers/peopleController.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -16,6 +17,13 @@ const router = createRouter({
       path: '/',
       name: 'Home',
       component: () => import('../views/pages/HomeView.vue'),
+    },
+    {
+      path: '/people',
+      name: 'People',
+      component: () => import('../views/pages/People.vue'),
+      beforeEnter: peopleIndexController.beforeEnter,
+      props: peopleIndexController.props
     },
     {
       path: '/events',

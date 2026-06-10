@@ -20,3 +20,7 @@ export async function update(table: string, columns: string[], id: string, data:
 
     await exec(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = ?`, params)
 }
+
+export async function insert(table: string, columns: string[], data: Record<string, unknown>): Promise<void> {
+  
+}
