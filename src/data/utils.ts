@@ -18,7 +18,5 @@ export async function update(table: string, columns: string[], id: string, data:
     if (sets.length === 0) return
     params.push(id)
 
-    console.log(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = ?`, params)
-
     await exec(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = ?`, params)
 }
