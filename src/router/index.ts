@@ -15,6 +15,17 @@ import {
   peopleGroupShowController,
 } from '@/controllers/peopleGroups.ts'
 import { timetableController } from '@/controllers/timetable.ts'
+import {
+  categoriesIndexController,
+  categoryShowController,
+  categoryEditController,
+  projectShowController,
+  projectEditController,
+  objectiveShowController,
+  objectiveEditController,
+  taskShowController,
+  taskEditController,
+} from '@/controllers/projects.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -30,6 +41,69 @@ const router = createRouter({
       component: () => import('../views/pages/Timetable.vue'),
       beforeEnter: timetableController.beforeEnter,
       props: timetableController.props
+    },
+    {
+      path: '/project-categories',
+      name: 'Project Categories',
+      component: () => import('../views/pages/ProjectCategories.vue'),
+      beforeEnter: categoriesIndexController.beforeEnter,
+      props: categoriesIndexController.props
+    },
+    {
+      path: '/project-categories/:id',
+      name: 'Project Category',
+      component: () => import('../views/pages/ProjectCategoryShow.vue'),
+      beforeEnter: categoryShowController.beforeEnter,
+      props: categoryShowController.props
+    },
+    {
+      path: '/project-categories/:id/edit',
+      name: 'Edit Project Category',
+      component: () => import('../views/pages/EditProjectCategory.vue'),
+      beforeEnter: categoryEditController.beforeEnter,
+      props: categoryEditController.props
+    },
+    {
+      path: '/projects/:id',
+      name: 'Project',
+      component: () => import('../views/pages/ProjectShow.vue'),
+      beforeEnter: projectShowController.beforeEnter,
+      props: projectShowController.props
+    },
+    {
+      path: '/projects/:id/edit',
+      name: 'Edit Project',
+      component: () => import('../views/pages/EditProject.vue'),
+      beforeEnter: projectEditController.beforeEnter,
+      props: projectEditController.props
+    },
+    {
+      path: '/objectives/:id',
+      name: 'Objective',
+      component: () => import('../views/pages/ObjectiveShow.vue'),
+      beforeEnter: objectiveShowController.beforeEnter,
+      props: objectiveShowController.props
+    },
+    {
+      path: '/objectives/:id/edit',
+      name: 'Edit Objective',
+      component: () => import('../views/pages/EditObjective.vue'),
+      beforeEnter: objectiveEditController.beforeEnter,
+      props: objectiveEditController.props
+    },
+    {
+      path: '/tasks/:id',
+      name: 'Task',
+      component: () => import('../views/pages/TaskShow.vue'),
+      beforeEnter: taskShowController.beforeEnter,
+      props: taskShowController.props
+    },
+    {
+      path: '/tasks/:id/edit',
+      name: 'Edit Task',
+      component: () => import('../views/pages/EditTask.vue'),
+      beforeEnter: taskEditController.beforeEnter,
+      props: taskEditController.props
     },
     {
       path: '/people',

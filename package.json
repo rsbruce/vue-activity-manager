@@ -17,6 +17,7 @@
     "@sqlite.org/sqlite-wasm": "^3.53.0-build1",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.0",
+    "marked": "^18.0.5",
     "sqlite-sync-engine": "file:../sync_engine_ts/sqlite-sync-engine-0.1.0.tgz",
     "tailwindcss": "^4.3.0",
     "vue": "^3.5.32",

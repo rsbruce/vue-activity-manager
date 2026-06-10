@@ -5,10 +5,16 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { library } from '@fortawesome/fontawesome-svg-core'
-import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons'
+import {
+    faArrowLeft, faArrowRight, faArrowUp, faArrowDown,
+    faUpDown, faArrowsUpToLine, faArrowsDownToLine, faFileLines,
+} from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
-library.add(faArrowLeft, faArrowRight)
+library.add(
+    faArrowLeft, faArrowRight, faArrowUp, faArrowDown,
+    faUpDown, faArrowsUpToLine, faArrowsDownToLine, faFileLines,
+)
 
 const app = createApp(App)
 
