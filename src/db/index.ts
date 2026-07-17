@@ -1,4 +1,4 @@
-import type { SQLiteAdapter } from 'sqlite-sync-engine'
+import type { SQLiteAdapter } from 'single-player-sync'
 
 let adapter: SQLiteAdapter | null = null
 

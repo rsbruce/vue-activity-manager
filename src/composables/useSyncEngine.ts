@@ -1,5 +1,5 @@
 import { ref } from 'vue'
-import { SyncEngine } from 'sqlite-sync-engine'
+import { SyncEngine, type SyncResult } from 'single-player-sync'
 import { CapacitorSQLiteAdapter } from '@/db/CapacitorSQLiteAdapter'
 import { rewritePositionalInserts } from '../db/rewriteInserts'
 import { setDb } from '@/db'
@@ -291,12 +291,23 @@ function errorMessage(e: unknown): string {
   return String(e)
 }
 
+// Tables probed to decide whether this is a fresh install. Join tables are
+// omitted — they can't have rows unless one of these does.
+const EMPTY_PROBE_TABLES = [
+  'projects', 'project_categories', 'activities', 'activity_types',
+  'objectives', 'tasks', 'events', 'people', 'people_groups',
+]
+
 let adapter: CapacitorSQLiteAdapter | null = null
 let engine: SyncEngine | null = null
 let currentUserId: string | null = null
+let registered = false
 
 const isReady = ref(false)
 const status = ref('')
+const isDbEmpty = ref(false)
+const syncStatus = ref<'idle' | 'syncing' | 'success' | 'failed'>('idle')
+const syncError = ref('')
 
 let resolveReady!: () => void
 export const ready: Promise<void> = new Promise((r) => {
@@ -305,7 +316,10 @@ export const ready: Promise<void> = new Promise((r) => {
 
 export function useSyncEngine() {
 
-  async function init(userId: string, serverUrl: string) {
+  // Local-only boot: opens the DB and applies the schema. Deliberately makes
+  // no network calls — with existing data the app must render immediately,
+  // even offline. Server registration happens lazily on first sync().
+  async function init(userId: string) {
     if (isReady.value && currentUserId === userId) return
 
     status.value = 'Initializing SQLite...'
@@ -313,12 +327,26 @@ export function useSyncEngine() {
     adapter = await CapacitorSQLiteAdapter.open(`activity-manager-${userId}`)
     await adapter.exec(SCHEMA_SQL)
 
-    setDb(adapter);
+    setDb(adapter)
 
     engine = new SyncEngine(adapter, SCHEMA_ID)
     await engine.init()
 
-    // Register user DB on server. 409 = already exists, that's fine.
+    const probe = EMPTY_PROBE_TABLES
+      .map((t) => `EXISTS(SELECT 1 FROM "${t}")`)
+      .join(' OR ')
+    const rows = await adapter.query<{ has_data: number }>(`SELECT (${probe}) AS has_data`)
+    isDbEmpty.value = !rows[0]?.has_data
+
+    currentUserId = userId
+    isReady.value = true
+    status.value = 'Ready'
+    resolveReady()
+  }
+
+  // Register user DB on server. 409 = already exists, that's fine.
+  async function ensureRegistered(serverUrl: string, userId: string) {
+    if (registered) return
     const res = await fetch(`${serverUrl}/databases`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -328,11 +356,7 @@ export function useSyncEngine() {
       const body = await res.json().catch(() => ({}))
       throw new Error(`Server registration failed (${res.status}): ${body.error ?? res.statusText}`)
     }
-
-    currentUserId = userId
-    isReady.value = true
-    status.value = 'Ready'
-    resolveReady()
+    registered = true
   }
 
   async function query<T = Record<string, unknown>>(sql: string): Promise<T[]> {
@@ -345,17 +369,23 @@ export function useSyncEngine() {
     return adapter.exec(rewritePositionalInserts(sql))
   }
 
-  async function sync(serverUrl: string, userId: string): Promise<void> {
+  async function sync(serverUrl: string, userId: string): Promise<SyncResult> {
     if (!engine) throw new Error('Not initialized')
-    status.value = 'Syncing...'
+    if (syncStatus.value === 'syncing') return { pushed: 0, pulled: 0 }
+    syncStatus.value = 'syncing'
+    syncError.value = ''
     try {
-      await engine.sync(serverUrl, userId)
-      status.value = 'Sync complete'
+      await ensureRegistered(serverUrl, userId)
+      const result = await engine.sync(serverUrl, userId)
+      if (result.pulled > 0) isDbEmpty.value = false
+      syncStatus.value = 'success'
+      return result
     } catch (e) {
-      status.value = `Sync failed: ${errorMessage(e)}`
+      syncError.value = errorMessage(e)
+      syncStatus.value = 'failed'
       throw e
     }
   }
 
-  return { isReady, status, init, query, exec, sync, errorMessage }
+  return { isReady, status, isDbEmpty, syncStatus, syncError, init, query, exec, sync, errorMessage }
 }

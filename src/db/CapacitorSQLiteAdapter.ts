@@ -1,6 +1,6 @@
 import { Capacitor } from '@capacitor/core'
 import { CapacitorSQLite, SQLiteConnection, SQLiteDBConnection } from '@capacitor-community/sqlite'
-import type { SQLiteAdapter } from 'sqlite-sync-engine'
+import type { SQLiteAdapter } from 'single-player-sync'
 
 /**
  * SQLiteAdapter backed by @capacitor-community/sqlite.
