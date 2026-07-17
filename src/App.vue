@@ -5,9 +5,19 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useSyncEngine } from '@/composables/useSyncEngine'
 import { refreshCurrent } from '@/router/defineController'
 import SyncIndicator from '@/views/components/SyncIndicator.vue'
+import MobileNav from '@/views/components/MobileNav.vue'
 
 const SERVER_URL = 'https://sync.ts.rsbruce.dev'
 const USER_ID = 'bob'
+
+const NAV_LINKS = [
+  { to: '/planner', label: 'Planner' },
+  { to: '/timetable', label: 'Timetable' },
+  { to: '/project-categories', label: 'Projects' },
+  { to: '/activities/index', label: 'Habits' },
+  { to: '/events', label: 'Events' },
+  { to: '/people', label: 'People' },
+]
 
 const { isReady, status, isDbEmpty, syncStatus, syncError, init, sync, errorMessage } = useSyncEngine()
 const initError = ref('')
@@ -71,20 +81,16 @@ const route = useRoute()
 </script>
 
 <template>
-  <div class="container max-w-5xl mx-auto pt-4 mb-10">
-    <nav class="flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
-        <RouterLink to="/planner">Planner</RouterLink>
-        <RouterLink to="/timetable">Timetable</RouterLink>
-        <RouterLink to="/project-categories">Projects</RouterLink>
-        <RouterLink to="/activities/index">Habits</RouterLink>
-        <RouterLink to="/events">Events</RouterLink>
-        <RouterLink to="/people">People</RouterLink>
+  <MobileNav :links="NAV_LINKS" />
+  <div class="container max-w-5xl mx-auto pt-2 md:pt-4 mb-10">
+    <nav class="hidden md:flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
+        <RouterLink v-for="link in NAV_LINKS" :key="link.to" :to="link.to">{{ link.label }}</RouterLink>
     </nav>
     <div v-if="blocking" class="boot">
       <p>{{ bootMessage }}</p>
     </div>
     <template v-else>
-        <h1 class="text-2xl">{{ route.name }}</h1>
+        <h1 class="hidden md:block text-2xl">{{ route.name }}</h1>
       <RouterView />
     </template>
     <SyncIndicator />

@@ -21,13 +21,13 @@ if (Capacitor.getPlatform() === 'web') {
 import { library } from '@fortawesome/fontawesome-svg-core'
 import {
     faArrowLeft, faArrowRight, faArrowUp, faArrowDown,
-    faUpDown, faArrowsUpToLine, faArrowsDownToLine, faFileLines, faXmark,
+    faUpDown, faArrowsUpToLine, faArrowsDownToLine, faFileLines, faXmark, faBars,
 } from '@fortawesome/free-solid-svg-icons'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 
 library.add(
     faArrowLeft, faArrowRight, faArrowUp, faArrowDown,
-    faUpDown, faArrowsUpToLine, faArrowsDownToLine, faFileLines, faXmark,
+    faUpDown, faArrowsUpToLine, faArrowsDownToLine, faFileLines, faXmark, faBars,
 )
 
 const app = createApp(App)
