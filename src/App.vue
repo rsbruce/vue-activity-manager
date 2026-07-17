@@ -4,7 +4,7 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { useSyncEngine } from '@/composables/useSyncEngine'
 
-const SERVER_URL = 'http://localhost:9000'
+const SERVER_URL = 'https://sync.ts.rsbruce.dev'
 const USER_ID = 'bob'
 
 const { isReady, status, init, sync, errorMessage } = useSyncEngine()

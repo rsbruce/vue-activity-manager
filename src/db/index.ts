@@ -1,12 +1,12 @@
-import type { BrowserSQLiteAdapter } from 'sqlite-sync-engine/browser'
+import type { SQLiteAdapter } from 'sqlite-sync-engine'
 
-let adapter: BrowserSQLiteAdapter | null = null
+let adapter: SQLiteAdapter | null = null
 
-export function setDb(a: BrowserSQLiteAdapter): void {
+export function setDb(a: SQLiteAdapter): void {
   adapter = a
 }
 
-function db(): BrowserSQLiteAdapter {
+function db(): SQLiteAdapter {
   if (!adapter) throw new Error('DB not initialized — call setDb() first')
   return adapter
 }

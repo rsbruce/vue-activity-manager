@@ -39,3 +39,8 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Copied from node_modules by the copy-sql-wasm vite plugin
+public/assets/sql-wasm.wasm
+
+android

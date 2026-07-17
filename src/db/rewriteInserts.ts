@@ -17,7 +17,7 @@ export function rewritePositionalInserts(sql: string): string {
       const createMatch = trimmed.match(
         /^CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?["'`]?(\w+)["'`]?\s*\(/is,
       )
-      if (createMatch) {
+      if (createMatch?.[1]) {
         const cols = extractColumnsFromCreate(trimmed)
         if (cols.length > 0) tableColumns.set(createMatch[1].toLowerCase(), cols)
         return stmt
@@ -27,7 +27,7 @@ export function rewritePositionalInserts(sql: string): string {
       const insertMatch = trimmed.match(
         /^(INSERT\s+(?:OR\s+\w+\s+)?INTO\s+["'`]?(\w+)["'`]?\s+)(VALUES\s*\()/is,
       )
-      if (insertMatch) {
+      if (insertMatch?.[2]) {
         const tableName = insertMatch[2].toLowerCase()
         const cols = tableColumns.get(tableName)
         if (cols) {
@@ -125,7 +125,7 @@ function extractColumnsFromCreate(createSql: string): string[] {
     if (/^\s*(primary|foreign|unique|check)\b/i.test(part)) continue
     // Column name: quoted ("name") or bare (name), followed by whitespace
     const m = part.match(/^["'`]?([a-zA-Z_]\w*)["'`]?\s/)
-    if (m) columns.push(m[1])
+    if (m?.[1]) columns.push(m[1])
   }
 
   return columns

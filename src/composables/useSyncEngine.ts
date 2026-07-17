@@ -1,7 +1,6 @@
-import { sqlite3Worker1Promiser, type Worker1Promiser } from '@sqlite.org/sqlite-wasm'
 import { ref } from 'vue'
-import { BrowserSQLiteAdapter } from 'sqlite-sync-engine/browser'
 import { SyncEngine } from 'sqlite-sync-engine'
+import { CapacitorSQLiteAdapter } from '@/db/CapacitorSQLiteAdapter'
 import { rewritePositionalInserts } from '../db/rewriteInserts'
 import { setDb } from '@/db'
 
@@ -139,8 +138,7 @@ CREATE TABLE IF NOT EXISTS "events"(
   "created_at" integer default (unixepoch()),
   "updated_at" integer default (unixepoch()),
   "deleted_at" integer,
-  foreign key("project_id") references "projects"("id") on delete cascade,
-  foreign key("objective_id") references "objectives"("id") on delete cascade
+  foreign key("project_id") references "projects"("id") on delete cascade
 );
 
 CREATE TABLE IF NOT EXISTS "person_at_event"(
@@ -293,7 +291,7 @@ function errorMessage(e: unknown): string {
   return String(e)
 }
 
-let adapter: BrowserSQLiteAdapter | null = null
+let adapter: CapacitorSQLiteAdapter | null = null
 let engine: SyncEngine | null = null
 let currentUserId: string | null = null
 
@@ -312,10 +310,7 @@ export function useSyncEngine() {
 
     status.value = 'Initializing SQLite...'
 
-    const promiser = await (sqlite3Worker1Promiser as unknown as () => Promise<Worker1Promiser>)()
-
-    const filename = `file:sync-poc-${userId}-v6.sqlite3?vfs=opfs`
-    adapter = await BrowserSQLiteAdapter.open(promiser, filename)
+    adapter = await CapacitorSQLiteAdapter.open(`activity-manager-${userId}`)
     await adapter.exec(SCHEMA_SQL)
 
     setDb(adapter);
