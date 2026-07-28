@@ -8,7 +8,7 @@ import SyncIndicator from '@/views/components/SyncIndicator.vue'
 import MobileNav from '@/views/components/MobileNav.vue'
 
 const SERVER_URL = 'https://sync.ts.rsbruce.dev'
-const USER_ID = 'bob'
+const USER_ID = 'robert'
 
 const NAV_LINKS = [
   { to: '/planner', label: 'Planner' },
