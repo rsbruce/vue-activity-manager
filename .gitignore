@@ -40,6 +40,10 @@ __screenshots__/
 # Vite
 *.timestamp-*-*.mjs
 
+# Env files: ignore all real ones, keep only the template.
+.env*
+!.env.example
+
 # Copied from node_modules by the copy-sql-wasm vite plugin
 public/assets/sql-wasm.wasm
 

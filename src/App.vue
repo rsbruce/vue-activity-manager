@@ -7,8 +7,8 @@ import { refreshCurrent } from '@/router/defineController'
 import SyncIndicator from '@/views/components/SyncIndicator.vue'
 import MobileNav from '@/views/components/MobileNav.vue'
 
-const SERVER_URL = 'https://sync.ts.rsbruce.dev'
-const USER_ID = 'robert'
+const SERVER_URL = import.meta.env.VITE_SYNC_URL
+const USER_ID = import.meta.env.VITE_USER_ID
 
 const NAV_LINKS = [
   { to: '/planner', label: 'Planner' },

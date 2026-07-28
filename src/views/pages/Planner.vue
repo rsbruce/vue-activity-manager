@@ -145,8 +145,6 @@ onUnmounted(() => clearInterval(timer))
 
 <template>
     <div class="py-2 space-y-2">
-        <h2 class="text-2xl">Planner</h2>
-
         <div class="grid md:grid-cols-2 gap-4">
             <!-- Left: day-by-day scheduling -->
             <div>
