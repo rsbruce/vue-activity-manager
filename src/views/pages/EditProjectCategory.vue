@@ -13,10 +13,11 @@ const router = useRouter()
 const form = reactive({
     name: props.category.name,
     color_scheme: props.category.color_scheme,
+    general_project_id: props.category.general_project_id || null
 })
 
 const submit = async () => {
-    await updateProjectCategory(props.category.id, { name: form.name, color_scheme: form.color_scheme })
+    await updateProjectCategory(props.category.id, { name: form.name, color_scheme: form.color_scheme, general_project_id: form.general_project_id })
     await router.push('/project-categories')
 }
 
@@ -47,6 +48,13 @@ const restoreCategory = async () => {
                         <option value="amber">Amber</option>
                         <option value="purple">Purple</option>
                         <option value="rose">Rose</option>
+                    </select>
+                </label>
+                <label v-if="category.projects">
+                    <div>General Project</div>
+                    <select class="bg-white border border-black rounded-md w-full" v-model="form.general_project_id">
+                        <option :value="null">None</option>
+                        <option v-for="project in category.projects.filter(p => p.status == 'active')" :value="project.id">{{ project.name }}</option>
                     </select>
                 </label>
                 <button type="submit" class="bg-sky-500 text-white rounded-md border-2 border-black cursor-pointer">Update</button>

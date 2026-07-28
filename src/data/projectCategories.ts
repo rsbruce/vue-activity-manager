@@ -1,4 +1,4 @@
-import { query } from '@/db'
+import { exec, query, transaction } from '@/db'
 import type { ProjectCategory, Project, Objective } from '@/types/projects'
 import { update, reorder } from './utils'
 
@@ -64,8 +64,30 @@ export async function createProjectCategory(input: { name: string; color_scheme:
     return rows[0]
 }
 
-export async function updateProjectCategory(id: string, input: { name: string; color_scheme: string }): Promise<void> {
-    await update('project_categories', ['name', 'color_scheme'], id, input)
+export async function updateProjectCategory(id: string, input: { name: string; color_scheme: string; general_project_id: string | null }): Promise<void> {
+    const txn = async () => {
+        await update('project_categories', ['name', 'color_scheme'], id, input)
+
+        // general_projects has no id column (its PK is project_id) and holds at
+        // most one live row per category, so the id-keyed update helper can't be
+        // used. Clear the category's current general project, then upsert the new
+        // one keyed on the project_id PK. Removal is a soft delete so it syncs as
+        // a tombstone; updated_at is bumped by the table's trigger.
+        await exec(
+            'UPDATE general_projects SET deleted_at = unixepoch() WHERE project_category_id = ? AND deleted_at IS NULL',
+            [id],
+        )
+
+        if (input.general_project_id !== null) {
+            await exec(
+                `INSERT INTO general_projects (project_id, project_category_id) VALUES (?, ?)
+                 ON CONFLICT(project_id) DO UPDATE SET project_category_id = excluded.project_category_id, deleted_at = NULL`,
+                [input.general_project_id, id],
+            )
+        }
+    }
+
+    await transaction(txn)
 }
 
 export async function reorderProjectCategories(items: { id: string; order: number | null }[]): Promise<void> {
