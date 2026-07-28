@@ -1,12 +1,10 @@
 <script setup lang="ts">
-import { marked } from 'marked'
 import { computed } from 'vue'
+import { renderMarkdown } from '@/utils/markdown'
 
 const props = defineProps<{ description: string | null }>()
 
-const rendered = computed(() =>
-    props.description ? marked(props.description) as string : '',
-)
+const rendered = computed(() => renderMarkdown(props.description))
 </script>
 
 <template>

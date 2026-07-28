@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { marked } from 'marked'
+import { renderMarkdown } from '@/utils/markdown'
 import DeleteRestoreButton from '../DeleteRestoreButton.vue'
 
 const props = defineProps<{
@@ -19,9 +19,7 @@ const emit = defineEmits<{
 
 const activeTab = ref<'write' | 'preview'>('write')
 
-const renderedDescription = computed(() =>
-    props.description ? marked(props.description) as string : '',
-)
+const renderedDescription = computed(() => renderMarkdown(props.description))
 </script>
 
 <template>
