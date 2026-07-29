@@ -3,6 +3,7 @@ import { SyncEngine, type SyncResult } from 'single-player-sync'
 import { CapacitorSQLiteAdapter } from '@/db/CapacitorSQLiteAdapter'
 import { rewritePositionalInserts } from '../db/rewriteInserts'
 import { setDb } from '@/db'
+import { getAccessToken, refreshAccess } from '@/data/authClient'
 
 const SCHEMA_ID = 'activity_manager_v1'
 
@@ -344,19 +345,26 @@ export function useSyncEngine() {
     resolveReady()
   }
 
-  // Register user DB on server. 409 = already exists, that's fine.
-  async function ensureRegistered(serverUrl: string, userId: string) {
+  // Register user DB on server. 409 = already exists, that's fine. The server
+  // derives the real identity from the token, so user_id here is ignored by an
+  // auth-enforcing server (still sent for the transition/no-auth case).
+  async function ensureRegistered(serverUrl: string, userId: string, accessToken: string) {
     if (registered) return
     const res = await fetch(`${serverUrl}/databases`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({ user_id: userId, schema_id: SCHEMA_ID }),
     })
-    if (!res.ok && res.status !== 409) {
-      const body = await res.json().catch(() => ({}))
-      throw new Error(`Server registration failed (${res.status}): ${body.error ?? res.statusText}`)
+    if (res.ok || res.status === 409) {
+      registered = true
+      return
     }
-    registered = true
+    const body = await res.json().catch(() => ({}))
+    const error = new Error(`Server registration failed (${res.status}): ${body.error ?? res.statusText}`) as Error & {
+      status?: number
+    }
+    error.status = res.status
+    throw error
   }
 
   async function query<T = Record<string, unknown>>(sql: string): Promise<T[]> {
@@ -375,14 +383,36 @@ export function useSyncEngine() {
     syncStatus.value = 'syncing'
     syncError.value = ''
     try {
-      await ensureRegistered(serverUrl, userId)
-      const result = await engine.sync(serverUrl, userId)
+      const result = await runSync(serverUrl, userId)
       if (result.pulled > 0) isDbEmpty.value = false
       syncStatus.value = 'success'
       return result
     } catch (e) {
       syncError.value = errorMessage(e)
       syncStatus.value = 'failed'
+      throw e
+    }
+  }
+
+  // Runs a sync with the current access token; on a 401 it refreshes once and
+  // retries. A missing/dead session surfaces as an error (the SyncIndicator
+  // shows it; the user re-logs in via /sync-settings).
+  async function runSync(serverUrl: string, userId: string, retried = false): Promise<SyncResult> {
+    let token = await getAccessToken()
+    if (!token) {
+      token = await refreshAccess()
+      if (!token) throw new Error('Not signed in')
+    }
+    try {
+      await ensureRegistered(serverUrl, userId, token)
+      return await engine!.sync(serverUrl, userId, token)
+    } catch (e) {
+      const status = (e as { status?: number }).status
+      if (!retried && status === 401) {
+        const fresh = await refreshAccess()
+        if (!fresh) throw new Error('Session expired — sign in again')
+        return runSync(serverUrl, userId, true)
+      }
       throw e
     }
   }
