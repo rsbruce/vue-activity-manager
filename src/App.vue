@@ -4,11 +4,11 @@ import { RouterLink, RouterView, useRoute } from 'vue-router'
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useSyncEngine } from '@/composables/useSyncEngine'
 import { refreshCurrent } from '@/router/defineController'
+import { getUserConfig, type UserMode } from '@/data/userConfig'
 import SyncIndicator from '@/views/components/SyncIndicator.vue'
 import MobileNav from '@/views/components/MobileNav.vue'
 
 const SERVER_URL = import.meta.env.VITE_SYNC_URL
-const USER_ID = import.meta.env.VITE_USER_ID
 
 const NAV_LINKS = [
   { to: '/planner', label: 'Planner' },
@@ -17,11 +17,17 @@ const NAV_LINKS = [
   { to: '/activities/index', label: 'Habits' },
   { to: '/events', label: 'Events' },
   { to: '/people', label: 'People' },
+  { to: '/sync-settings', label: 'Sync' },
 ]
 
 const { isReady, status, isDbEmpty, syncStatus, syncError, init, sync, errorMessage } = useSyncEngine()
 const initError = ref('')
 const firstSyncDone = ref(false)
+
+// Local identity/mode, read from Preferences on boot (not env).
+const userMode = ref<UserMode | null>(null)
+const username = ref<string | null>(null)
+const isSyncUser = computed(() => userMode.value === 'sync' && !!username.value)
 
 // Boot-screen text. A failed first sync on an empty DB is the one case where
 // the error must be shown inline — there's no app behind it to fall back to.
@@ -33,10 +39,11 @@ const bootMessage = computed(() => {
 })
 
 // Sync in the background; when the pull applied rows, re-run the current
-// route's controller so the visible page reflects them.
+// route's controller so the visible page reflects them. Only sync users sync.
 const doSync = async () => {
+  if (!isSyncUser.value) return
   try {
-    const { pulled } = await sync(SERVER_URL, USER_ID)
+    const { pulled } = await sync(SERVER_URL, username.value!)
     firstSyncDone.value = true
     if (pulled > 0) await refreshCurrent()
   } catch {
@@ -44,33 +51,40 @@ const doSync = async () => {
   }
 }
 
-// The boot screen blocks only while there is nothing to show: a fresh install
-// (empty DB) waiting on its first sync. With existing data the app renders
-// immediately and sync never blocks navigation.
-const blocking = computed(() => !isReady.value || (isDbEmpty.value && !firstSyncDone.value))
+// The boot screen blocks only while there is nothing to show: a sync user on a
+// fresh (empty) DB waiting on their first sync. Local/fresh users and users
+// with existing data render as soon as the DB is open.
+const blocking = computed(() => !isReady.value || (isSyncUser.value && isDbEmpty.value && !firstSyncDone.value))
 
-onMounted(async () => {
-  try {
-    await init(USER_ID)   // local only: opens DB, applies schema, setDb(adapter)
-  } catch (e) {
-    initError.value = errorMessage(e)
-    return
-  }
-  if (isDbEmpty.value) status.value = 'Syncing for the first time...'
-  doSync()
-})
-
-// Periodic + on focus
 let timer: ReturnType<typeof setInterval> | null = null
 const onVisible = () => {
   if (document.visibilityState === 'visible' && isReady.value) {
     doSync()
   }
 }
-onMounted(() => {
-  timer = setInterval(onVisible, 30_000)
-  document.addEventListener('visibilitychange', onVisible)
+
+onMounted(async () => {
+  const cfg = await getUserConfig()
+  userMode.value = cfg.mode
+  username.value = cfg.username
+
+  // Sync users open a per-username database; everyone else shares the local one.
+  const dbUserId = isSyncUser.value ? username.value! : 'local'
+  try {
+    await init(dbUserId)   // opens DB, applies schema, setDb(adapter)
+  } catch (e) {
+    initError.value = errorMessage(e)
+    return
+  }
+
+  if (isSyncUser.value) {
+    if (isDbEmpty.value) status.value = 'Syncing for the first time...'
+    doSync()
+    timer = setInterval(onVisible, 30_000)
+    document.addEventListener('visibilitychange', onVisible)
+  }
 })
+
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
   document.removeEventListener('visibilitychange', onVisible)
@@ -93,6 +107,6 @@ const route = useRoute()
         <h1 class="hidden md:block text-2xl">{{ route.name }}</h1>
       <RouterView />
     </template>
-    <SyncIndicator />
+    <SyncIndicator v-if="isSyncUser" />
   </div>
 </template>

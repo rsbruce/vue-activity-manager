@@ -37,6 +37,11 @@ const router = createRouter({
       component: () => import('../views/pages/HomeView.vue'),
     },
     {
+      path: '/sync-settings',
+      name: 'Sync Settings',
+      component: () => import('../views/pages/SyncSettings.vue'),
+    },
+    {
       path: '/planner',
       name: 'Planner',
       component: () => import('../views/pages/Planner.vue'),
