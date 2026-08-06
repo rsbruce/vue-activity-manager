@@ -1,4 +1,4 @@
-import { query, exec, transaction } from '@/db'
+import { query, exec, transaction, insert } from '@/db'
 import type { Event } from '@/types/events'
 import type { Person } from '@/types/people'
 import { update } from './utils'
@@ -60,7 +60,7 @@ export async function createPerson(input: {
     firstname: string, lastname: string, dob?: Date
 }): Promise<Event | undefined>
 {
-    const rows = await query<Event>(
+    const rows = await insert<Event>(
         'INSERT INTO people (firstname, lastname, dob) VALUES (?, ?, ?) RETURNING *',
         [input.firstname, input.lastname, input.dob?.isoDate()]
     )

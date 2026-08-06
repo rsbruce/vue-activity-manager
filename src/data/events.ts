@@ -14,20 +14,26 @@ export async function createEvent(input: {
     name: string, project_id?: string, start_datetime: string, end_datetime: string, person_ids: string[]
 }): Promise<Event | undefined>
 {
-    const rows = await query<Event>(
-        'INSERT INTO events (name, project_id, start_datetime, end_datetime) VALUES (?, ?, ?, ?) RETURNING *',
-        [input.name, input.project_id ?? null, input.start_datetime, input.end_datetime]
-    )
+    // Wrapped in a transaction so the write persists (saveToStore on web) even
+    // when there are no attendees — otherwise an attendee-less event's INSERT,
+    // issued via the read path (query, for RETURNING), is never saved.
+    let event: Event | undefined
+    await transaction(async () => {
+        const rows = await query<Event>(
+            'INSERT INTO events (name, project_id, start_datetime, end_datetime) VALUES (?, ?, ?, ?) RETURNING *',
+            [input.name, input.project_id ?? null, input.start_datetime, input.end_datetime]
+        )
 
-    const event = rows[0];
+        event = rows[0]
 
-    if(input.person_ids && event) {
-        for (let i=0; i < input.person_ids.length; i++) {
-            await exec('INSERT INTO person_at_event (person_id, event_id) VALUES (?, ?)',
-                [input.person_ids[i], event.id]
-            )
+        if (input.person_ids && event) {
+            for (let i = 0; i < input.person_ids.length; i++) {
+                await exec('INSERT INTO person_at_event (person_id, event_id) VALUES (?, ?)',
+                    [input.person_ids[i], event.id]
+                )
+            }
         }
-    }
+    })
 
     return event;
 }

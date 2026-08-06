@@ -1,4 +1,4 @@
-import { query, exec } from '@/db'
+import { query, exec, insert } from '@/db'
 import type { ActivityType } from '@/types/activities'
 
 export function getAll(): Promise<ActivityType[]> {
@@ -24,7 +24,7 @@ export async function create(input: {
   theme: string
   is_negative?: boolean | null
 }): Promise<ActivityType|undefined> {
-  const rows = await query<ActivityType>(
+  const rows = await insert<ActivityType>(
     'INSERT INTO activity_types (name, theme, is_negative) VALUES (?, ?, ?) RETURNING *',
     [input.name, input.theme, input.is_negative ?? null],
   )

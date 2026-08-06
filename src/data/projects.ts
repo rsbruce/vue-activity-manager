@@ -1,4 +1,4 @@
-import { query, exec } from '@/db'
+import { query, exec, insert } from '@/db'
 import type { Project, Objective, Task, ProjectStatus } from '@/types/projects'
 import type { TimetableProjectCategories } from '@/types/events'
 import { update, reorder } from './utils'
@@ -132,7 +132,7 @@ export async function createProject(input: {
     set_as_to_do_list?: boolean
 }): Promise<Project | undefined> {
     const fields = statusToFields(input.status)
-    const rows = await query<Project>(
+    const rows = await insert<Project>(
         `INSERT INTO projects (name, description, active, completed_at, project_category_id)
             VALUES (?, ?, ?, ?, ?) RETURNING *`,
         [input.name, input.description ?? null, fields.active, fields.completed_at, input.project_category_id],

@@ -1,4 +1,4 @@
-import { exec, query, transaction } from '@/db'
+import { exec, query, transaction, insert } from '@/db'
 import type { ProjectCategory, Project, Objective } from '@/types/projects'
 import { update, reorder } from './utils'
 
@@ -57,7 +57,7 @@ export async function getProjectCategory(id: string): Promise<ProjectCategory | 
 }
 
 export async function createProjectCategory(input: { name: string; color_scheme: string }): Promise<ProjectCategory | undefined> {
-    const rows = await query<ProjectCategory>(
+    const rows = await insert<ProjectCategory>(
         'INSERT INTO project_categories (name, color_scheme) VALUES (?, ?) RETURNING *',
         [input.name, input.color_scheme],
     )

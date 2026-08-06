@@ -1,4 +1,4 @@
-import { query, exec } from '@/db'
+import { query, exec, insert } from '@/db'
 import type {
   Activity,
   ActivityType,
@@ -54,7 +54,7 @@ export async function create(input: {
   name: string
   activity_type_id: string
 }): Promise<Activity | undefined> {
-  const rows = await query<Activity>(
+  const rows = await insert<Activity>(
     'INSERT INTO activities (name, activity_type_id) VALUES (?, ?) RETURNING *',
     [input.name, input.activity_type_id],
   )
