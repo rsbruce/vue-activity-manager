@@ -16,6 +16,7 @@ const form = reactive({
     name: props.objective.name,
     description: props.objective.description ?? '',
     project_id: props.objective.project_id,
+    due_date: props.objective.due_date ?? '',
 })
 
 const submit = async () => {
@@ -23,6 +24,7 @@ const submit = async () => {
         name: form.name,
         description: form.description,
         project_id: form.project_id || null,
+        due_date: form.due_date || null,
     })
     await router.push(`/objectives/${props.objective.id}`)
 }
@@ -62,6 +64,10 @@ const restoreObjective = async () => {
                     <option value="">None</option>
                     <option v-for="p in objective.project.project_area.projects" :key="p.id" :value="p.id">{{ p.name }}</option>
                 </select>
+            </label>
+            <label>
+                <div>Due date</div>
+                <input type="date" class="p-0.5 border rounded-md bg-white text-black" v-model="form.due_date" />
             </label>
         </template>
     </EditItemForm>

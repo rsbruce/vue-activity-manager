@@ -6,7 +6,8 @@ import type { Person } from '@/types/people'
 import { getTimetableWindow } from '@/data/timetable'
 import { getProjectOnDayData, addProjectOnDay as addPod, removeProjectOnDay as removePod } from '@/data/projectOnDay'
 import { getProjectsForPlanner, getToDoListProject } from '@/data/projects'
-import { completeObjective, uncompleteObjective, createObjective } from '@/data/objectives'
+import { completeObjective, uncompleteObjective, createObjective, type DueDateObjective } from '@/data/objectives'
+import { formatDueDateParts } from '@/utils/dueDate'
 import DayNavigator from '../components/timetable/DayNavigator.vue'
 import TimetableGrid from '../components/timetable/TimetableGrid.vue'
 import TimetableModal from '../components/timetable/TimetableModal.vue'
@@ -23,6 +24,7 @@ const props = defineProps<{
     allProjects: Project[]
     toDoList: Project | null
     toDoListId: string | null
+    dueDateObjectives: DueDateObjective[]
     projectOnDayData: ProjectOnDayData
     timetableProjectCategories: TimetableProjectCategories
     activeProjects: Project[]
@@ -79,6 +81,32 @@ async function toToday() {
 const allProjectsIncludingToDoList = computed(() =>
     toDoList.value ? [toDoList.value, ...allProjects.value] : allProjects.value,
 )
+
+// Objectives with a due date, grouped by day (the list arrives ordered by
+// date), then by project category within each day.
+type CategoryGroup = { key: string; name: string; color_scheme: string | null; objectives: DueDateObjective[] }
+type DateGroup = { date: string; label: string; relative: string; categories: CategoryGroup[] }
+const objectivesByDueDate = computed(() => {
+    const groups: DateGroup[] = []
+    for (const obj of props.dueDateObjectives) {
+        if (!obj.due_date) continue
+        let dateGroup = groups[groups.length - 1]
+        if (!dateGroup || dateGroup.date !== obj.due_date) {
+            const { label, relative } = formatDueDateParts(obj.due_date)
+            dateGroup = { date: obj.due_date, label, relative, categories: [] }
+            groups.push(dateGroup)
+        }
+        const key = obj.project_category_id ?? ''
+        let category = dateGroup.categories.find((c) => c.key === key)
+        if (!category) {
+            const name = props.projectCategories.find((pc) => pc.id === obj.project_category_id)?.name ?? ''
+            category = { key, name, color_scheme: obj.color_scheme, objectives: [] }
+            dateGroup.categories.push(category)
+        }
+        category.objectives.push(obj)
+    }
+    return groups
+})
 
 const toDoListCategory = computed(() => props.projectCategories.find((pc) => pc.id === toDoList.value?.project_category_id))
 const toDoObjectives = computed<Objective[]>(() =>
@@ -144,73 +172,37 @@ onUnmounted(() => clearInterval(timer))
 </script>
 
 <template>
-    <div class="py-2 space-y-2">
-        <div class="grid md:grid-cols-2 gap-4">
-            <!-- Left: day-by-day scheduling -->
-            <div>
-                <DayNavigator
-                    @week-before="navigate(-7)"
-                    @day-before="navigate(-1)"
-                    @today="toToday"
-                    @day-after="navigate(1)"
-                    @week-after="navigate(7)"
-                />
-                <PlannerDays
-                    :start-date="localDisplayStart"
-                    :active-projects="allProjectsIncludingToDoList"
-                    :project-on-day-data="projectOnDayData"
-                    :project-categories="projectCategories"
-                    :show-later-days="view !== 'timetable'"
-                    @add-project="onAddProjectOnDay"
-                    @toggle="handleToggle"
-                    @remove-project-on-day="onRemoveProjectOnDay"
-                />
-            </div>
-
-            <!-- Right: Projects view / Timetable strip -->
-            <div>
-                <div class="grid grid-cols-2 gap-2 rounded-md bg-sky-100 p-1 text-black mb-2">
-                    <button class="rounded-md p-1 text-center font-bold cursor-pointer" :class="view === 'projects' ? 'bg-sky-500' : 'bg-sky-200'" @click="view = 'projects'">Projects</button>
-                    <button class="rounded-md p-1 text-center font-bold cursor-pointer" :class="view === 'timetable' ? 'bg-sky-500' : 'bg-sky-200'" @click="view = 'timetable'">Timetable</button>
-                </div>
-
-                <template v-if="view === 'projects'">
-                    <div class="mb-2">
-                        <RouterLink to="/project-categories" class="text-lg underline">Project Areas <font-awesome-icon icon="arrow-right" /></RouterLink>
-                    </div>
-                    <ToDoList
-                        v-if="toDoList && toDoListCategory"
-                        :project-name="toDoList.name"
-                        :objectives="toDoObjectives"
-                        :theme="toDoListCategory.color_scheme"
-                        @toggle="handleToggle"
-                        @add-objective="addToDoObjective"
-                    />
-                    <ProjectAreaActionItems :project-categories="projectCategories" :projects="allProjects" />
-                </template>
-                <template v-else>
-                    <TimetableGrid
-                        :timetable="timetable"
-                        :calendar="calendar"
-                        :habit-table="{}"
-                        :display-start="localDisplayStart"
-                        :display-days="1"
-                        :present-moment="presentMoment"
-                        @open-modal="openModal"
-                        @open-modal-for-item="(id) => openModalForItem(id)"
-                    />
-                </template>
-            </div>
-        </div>
-
-        <TimetableModal
-            v-model:open="modalOpen"
-            :people="people"
-            :project-categories="timetableProjectCategories"
-            :active-projects="activeProjects"
-            :initial="modalInitial"
-            @saved="loadWindow"
-            @deleted="loadWindow"
+    <div class="grid lg:grid-cols-2 gap-2">
+        <ToDoList
+            v-if="toDoList && toDoListCategory"
+            :project-name="toDoList.name"
+            :objectives="toDoObjectives"
+            :theme="toDoListCategory.color_scheme"
+            @toggle="handleToggle"
+            @add-objective="addToDoObjective"
         />
+
+        <div class="space-y-4">
+            <div v-for="group in objectivesByDueDate" :key="group.date">
+                <h3 class="font-semibold border-b flex justify-between items-baseline gap-2">
+                    <span>{{ group.label }}</span>
+                    <span class="text-sm font-normal">{{ group.relative }}</span>
+                </h3>
+                <div class="space-y-1 mt-1">
+                    <ul
+                        v-for="category in group.categories"
+                        :key="category.key"
+                        class="bg-main rounded-md px-2 py-1 text-blac list-disc"
+                        :data-model-theme="category.color_scheme ?? 'gray'"
+                    >
+                        <li v-if="category.name" class="list-none font-semibold">{{ category.name }}</li>
+                        <li v-for="obj in category.objectives" :key="obj.id" class="ml-4">
+                            <RouterLink :to="`/objectives/${obj.id}`">{{ obj.name }}</RouterLink>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <p v-if="!objectivesByDueDate.length">No objectives with a due date.</p>
+        </div>
     </div>
 </template>

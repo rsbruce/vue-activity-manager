@@ -42,6 +42,24 @@ export async function getObjective(id: string): Promise<Objective | undefined> {
     return objective
 }
 
+export type DueDateObjective = Objective & { color_scheme: string | null; project_category_id: string | null }
+
+// Incomplete, non-deleted objectives that have a due date, ordered by date so
+// they can be grouped by day for the planner. Carries the objective's project
+// category (id + colour scheme) for grouping and theming.
+export async function getObjectivesByDueDate(): Promise<DueDateObjective[]> {
+    return query<DueDateObjective>(
+        `SELECT objectives.*, pc.id AS project_category_id, pc.color_scheme AS color_scheme
+        FROM objectives
+        LEFT JOIN projects p ON p.id = objectives.project_id AND p.deleted_at IS NULL
+        LEFT JOIN project_categories pc ON pc.id = p.project_category_id AND pc.deleted_at IS NULL
+        WHERE objectives.due_date IS NOT NULL
+            AND objectives.completed_at IS NULL
+            AND objectives.deleted_at IS NULL
+        ORDER BY objectives.due_date ASC, objectives."order", objectives.name`,
+    )
+}
+
 export async function createObjective(input: { name: string; description?: string | null; project_id: string }): Promise<void> {
     await exec(
         'INSERT INTO objectives (name, description, project_id) VALUES (?, ?, ?)',
@@ -49,11 +67,12 @@ export async function createObjective(input: { name: string; description?: strin
     )
 }
 
-export async function updateObjective(id: string, input: { name: string; description?: string | null; project_id?: string | null }): Promise<void> {
-    await update('objectives', ['name', 'description', 'project_id'], id, {
+export async function updateObjective(id: string, input: { name: string; description?: string | null; project_id?: string | null; due_date?: string | null }): Promise<void> {
+    await update('objectives', ['name', 'description', 'project_id', 'due_date'], id, {
         name: input.name,
         description: input.description ?? null,
         project_id: input.project_id ?? null,
+        due_date: input.due_date ?? null,
     })
 }
 

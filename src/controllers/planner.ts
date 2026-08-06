@@ -11,6 +11,7 @@ import {
     getActiveProjectsWithArea,
     getProjectCategoriesNested,
 } from '@/data/projects'
+import { getObjectivesByDueDate, type DueDateObjective } from '@/data/objectives'
 import { getProjectOnDayData } from '@/data/projectOnDay'
 import { getTimetableWindow } from '@/data/timetable'
 import { getAllPeople } from '@/data/people'
@@ -20,6 +21,7 @@ type PlannerData = TimetableWindow & {
     allProjects: Project[]
     toDoList: Project | null
     toDoListId: string | null
+    dueDateObjectives: DueDateObjective[]
     projectOnDayData: ProjectOnDayData
     timetableProjectCategories: TimetableProjectCategories
     activeProjects: Project[]
@@ -38,6 +40,7 @@ export const plannerController = defineController<PlannerData>(async () => {
         projectCategories,
         allProjects,
         toDoList,
+        dueDateObjectives,
         projectOnDayData,
         window,
         timetableProjectCategories,
@@ -47,6 +50,7 @@ export const plannerController = defineController<PlannerData>(async () => {
         getAllProjectCategories(),
         getProjectsForPlanner(toDoListId),
         toDoListId ? getToDoListProject(toDoListId) : Promise.resolve(undefined),
+        getObjectivesByDueDate(),
         getProjectOnDayData(startYmd),
         getTimetableWindow(displayStart.addDays(-7).isoDate(), displayStart.addDays(7).isoDate()),
         getProjectCategoriesNested(),
@@ -60,6 +64,7 @@ export const plannerController = defineController<PlannerData>(async () => {
         allProjects,
         toDoList: toDoList ?? null,
         toDoListId,
+        dueDateObjectives,
         projectOnDayData,
         timetableProjectCategories,
         activeProjects,

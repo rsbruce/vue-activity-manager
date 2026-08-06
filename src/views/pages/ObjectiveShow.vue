@@ -6,6 +6,7 @@ import { createTask, completeTask, uncompleteTask, reorderTasks } from '@/data/t
 import ChildItemList from '../components/projects/ChildItemList.vue'
 import CompleteToggle from '../components/projects/CompleteToggle.vue'
 import DescriptionPanel from '../components/projects/DescriptionPanel.vue'
+import { formatDueDate } from '@/utils/dueDate'
 
 const props = defineProps<{ objective: Objective }>()
 
@@ -43,6 +44,8 @@ const onReorder = async (items: { id: string; order: number | null }[]) => {
         </div>
 
         <CompleteToggle :completed-at="objective.completed_at" @toggle="toggleObjectiveComplete" />
+
+        <div v-if="objective.due_date" class="text-sm">Due: {{ formatDueDate(objective.due_date) }}</div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mt-2" :data-model-theme="objective.project?.project_area?.color_scheme">
             <ChildItemList

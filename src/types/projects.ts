@@ -38,6 +38,7 @@ export type Objective = {
     project_id: string | null
     order: number | null
     completed_at: number | null
+    due_date: string | null
     deleted_at: string | null
     tasks?: Task[]
     project?: Project

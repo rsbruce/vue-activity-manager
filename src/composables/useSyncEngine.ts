@@ -80,6 +80,7 @@ CREATE TABLE IF NOT EXISTS "objectives"(
   "project_id" text,
   "order" integer,
   "completed_at" integer,
+  "due_date" date check ("due_date" is null or "due_date" glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
   "created_at" integer default (unixepoch()),
   "updated_at" integer default (unixepoch()),
   "deleted_at" integer,
@@ -327,6 +328,14 @@ export function useSyncEngine() {
 
     adapter = await CapacitorSQLiteAdapter.open(`activity-manager-${userId}`)
     await adapter.exec(SCHEMA_SQL)
+
+    // Idempotent additive migration: CREATE TABLE IF NOT EXISTS above is a no-op
+    // on a table that already exists, so pre-existing DBs need the new column
+    // added explicitly. due_date holds a YYYY-MM-DD string; the CHECK enforces it.
+    const objectiveCols = await adapter.query<{ name: string }>(`PRAGMA table_info("objectives")`)
+    if (!objectiveCols.some((c) => c.name === 'due_date')) {
+      await adapter.exec(`ALTER TABLE "objectives" ADD COLUMN "due_date" date check ("due_date" is null or "due_date" glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]')`)
+    }
 
     setDb(adapter)
 
