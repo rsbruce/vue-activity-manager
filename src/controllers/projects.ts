@@ -2,15 +2,25 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { defineController } from '@/router/defineController'
 import type { ProjectCategory, Project, Objective, Task } from '@/types/projects'
 import { getAllProjectCategories, getProjectCategory } from '@/data/projectCategories'
-import { getProject, getToDoListProjectId } from '@/data/projects'
+import { getProject, getToDoListProjectId, getActiveProjectsWithArea } from '@/data/projects'
 import { getObjective } from '@/data/objectives'
 import { getTask } from '@/data/tasks'
 
 // ── Project Categories ────────────────────────────────────────────────
-export const categoriesIndexController = defineController<{ categories: ProjectCategory[] }>(
-    async (): Promise<{ categories: ProjectCategory[] }> => {
-        const categories = await getAllProjectCategories()
-        return { categories }
+type CategoriesIndexData = {
+    categories: ProjectCategory[]
+    projects: Project[]
+    toDoListProjectId: string | null
+}
+
+export const categoriesIndexController = defineController<CategoriesIndexData>(
+    async (): Promise<CategoriesIndexData> => {
+        const [categories, projects, toDoListProjectId] = await Promise.all([
+            getAllProjectCategories(),
+            getActiveProjectsWithArea(),
+            getToDoListProjectId(),
+        ])
+        return { categories, projects, toDoListProjectId }
     },
 )
 
@@ -36,16 +46,15 @@ export const projectShowController = defineController<{ project: Project | undef
     },
 )
 
-type ProjectEditData = { project: Project | undefined; categories: ProjectCategory[]; toDoListProjectId: string | null }
+type ProjectEditData = { project: Project | undefined; categories: ProjectCategory[] }
 
 export const projectEditController = defineController<ProjectEditData>(
     async (route: RouteLocationNormalized): Promise<ProjectEditData> => {
-        const [project, categories, toDoListProjectId] = await Promise.all([
+        const [project, categories] = await Promise.all([
             getProject(route.params.id as string),
             getAllProjectCategories(),
-            getToDoListProjectId(),
         ])
-        return { project, categories, toDoListProjectId }
+        return { project, categories }
     },
 )
 

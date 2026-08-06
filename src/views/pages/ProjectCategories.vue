@@ -1,11 +1,28 @@
 <script setup lang="ts">
-import type { ProjectCategory } from '@/types/projects'
+import type { Project, ProjectCategory } from '@/types/projects'
 import { reactive, ref } from 'vue'
 import { refreshCurrent } from '@/router/defineController'
 import { createProjectCategory, reorderProjectCategories } from '@/data/projectCategories'
+import { setToDoListProject, clearToDoListProject } from '@/data/projects'
 import ReorderingModal from '../components/projects/ReorderingModal.vue'
 
-defineProps<{ categories: ProjectCategory[] }>()
+const props = defineProps<{
+    categories: ProjectCategory[]
+    projects: Project[]
+    toDoListProjectId: string | null
+}>()
+
+// Selecting a project immediately persists it as the to-do list project;
+// selecting "None" clears it.
+const selectedToDoProject = ref(props.toDoListProjectId ?? '')
+const setToDoProject = async () => {
+    if (selectedToDoProject.value) {
+        await setToDoListProject(selectedToDoProject.value)
+    } else {
+        await clearToDoListProject()
+    }
+    await refreshCurrent()
+}
 
 const form = reactive({ name: '', color_scheme: 'amber' })
 
@@ -26,24 +43,16 @@ const reorder = async (items: { id: string; order: number | null }[]) => {
 
 <template>
     <div class="py-6 space-y-6">
-        <h2 class="text-xl underline">New Project Category</h2>
+        <h2 class="text-xl underline">Set To-Do List Project</h2>
         <div class="p-2 rounded-md bg-gray-300 shadow-md w-72 text-black">
-            <form @submit.prevent="submit" class="flex flex-col gap-2">
-                <label>
-                    <div>Name</div>
-                    <input class="bg-white border border-black rounded-md w-full" type="text" v-model="form.name" />
-                </label>
-                <label>
-                    <div>Color Scheme</div>
-                    <select class="bg-white border border-black rounded-md w-full" v-model="form.color_scheme">
-                        <option value="green">Green</option>
-                        <option value="amber">Amber</option>
-                        <option value="purple">Purple</option>
-                        <option value="rose">Rose</option>
-                    </select>
-                </label>
-                <button type="submit" class="bg-sky-500 text-white rounded-md border-2 border-black cursor-pointer">Create</button>
-            </form>
+            <select
+                class="bg-white border border-black rounded-md w-full"
+                v-model="selectedToDoProject"
+                @change="setToDoProject"
+            >
+                <option value="">None</option>
+                <option v-for="project in projects" :value="project.id" :key="project.id">{{ project.name }}</option>
+            </select>
         </div>
 
         <div class="flex gap-2 items-center">
@@ -66,6 +75,26 @@ const reorder = async (items: { id: string; order: number | null }[]) => {
 
         <ReorderingModal v-model:open="modalOpen" :items="categories" :theme="null" @save="reorder" />
 
-        <p v-if="!categories.length">No project categories yet. Create one above.</p>
+        <p v-if="!categories.length">No project categories yet. Create one below.</p>
+
+        <h2 class="text-xl underline">New Project Category</h2>
+        <div class="p-2 rounded-md bg-gray-300 shadow-md w-72 text-black">
+            <form @submit.prevent="submit" class="flex flex-col gap-2">
+                <label>
+                    <div>Name</div>
+                    <input class="bg-white border border-black rounded-md w-full" type="text" v-model="form.name" />
+                </label>
+                <label>
+                    <div>Color Scheme</div>
+                    <select class="bg-white border border-black rounded-md w-full" v-model="form.color_scheme">
+                        <option value="green">Green</option>
+                        <option value="amber">Amber</option>
+                        <option value="purple">Purple</option>
+                        <option value="rose">Rose</option>
+                    </select>
+                </label>
+                <button type="submit" class="bg-sky-500 text-white rounded-md border-2 border-black cursor-pointer">Create</button>
+            </form>
+        </div>
     </div>
 </template>

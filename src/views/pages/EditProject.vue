@@ -10,7 +10,6 @@ import StatusButtons from '../components/projects/StatusButtons.vue'
 const props = defineProps<{
     project: Project
     categories: ProjectCategory[]
-    toDoListProjectId: string | null
 }>()
 
 const router = useRouter()
@@ -20,7 +19,6 @@ const form = reactive({
     description: props.project.description || '',
     status: props.project.status ?? 'active',
     project_category_id: props.project.project_category_id,
-    set_as_to_do_list: props.project.id === props.toDoListProjectId,
 })
 
 const submit = async () => {
@@ -29,7 +27,6 @@ const submit = async () => {
         description: form.description,
         status: form.status,
         project_category_id: form.project_category_id!,
-        set_as_to_do_list: form.set_as_to_do_list,
     })
     await router.push(`/projects/${props.project.id}`)
 }
@@ -63,10 +60,6 @@ const restoreProject = async () => {
                 <select class="p-0.5 border rounded-md w-full bg-white text-black md:max-w-96" v-model="form.project_category_id">
                     <option v-for="cat in categories" :value="cat.id" :key="cat.id">{{ cat.name }}</option>
                 </select>
-            </label>
-            <label class="flex items-center gap-2 w-fit">
-                <input type="checkbox" v-model="form.set_as_to_do_list" />
-                <span>To Do List project</span>
             </label>
         </template>
     </EditItemForm>

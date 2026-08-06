@@ -186,6 +186,10 @@ export async function setToDoListProject(projectId: string): Promise<void> {
     }
 }
 
+export async function clearToDoListProject(): Promise<void> {
+    await exec('UPDATE to_do_list_project SET to_do_list_project_id = NULL')
+}
+
 /** All non-deleted projects in non-deleted categories (optionally excluding one),
  * each with objectives→tasks + derived status. For the Planner. */
 export async function getProjectsForPlanner(excludeId: string | null): Promise<Project[]> {
