@@ -7,6 +7,14 @@ const columns = ['firstname', 'lastname', 'dob']
 
 export async function getAllPeople(): Promise<Person[]>
 {
+    // "Now" as a local wall-clock string matching how start_datetime is stored
+    // (YYYY-MM-DDTHH:mm), so the past/future comparisons below sort correctly.
+    // Bound to each of the four placeholders — without it they were NULL, which
+    // made last-seen / next-event always resolve to nothing.
+    const now = new Date()
+    const pad = (n: number) => String(n).padStart(2, '0')
+    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+
     const people = await query<Person>(`
         SELECT people.*, 
         (SELECT count(*) 
@@ -51,7 +59,7 @@ export async function getAllPeople(): Promise<Person[]>
             LIMIT 1
         ) as next_event_name 
         FROM people WHERE people.deleted_at IS NULL ORDER BY events_count DESC
-    `)
+    `, [nowStr, nowStr, nowStr, nowStr])
 
     return people
 }
