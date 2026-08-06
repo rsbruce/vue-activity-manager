@@ -96,7 +96,7 @@ function projectsForDay(date: Date): ProjectItem[] {
                 @add-project="emit('add-project', $event)"
             />
         </div>
-        <div v-if="showLaterDays" class="bg-slate-700 rounded-md p-2 shadow-md">
+        <div class="bg-slate-700 rounded-md p-2 shadow-md">
             <div v-for="i in 6" :key="i" class="space-y-1 mb-4">
                 <h4 class="text-xl underline">{{ getDateDisplayName(startDate.addDays(i)) }}</h4>
                 <template v-for="item in projectsForDay(startDate.addDays(i))" :key="item.project.id">
