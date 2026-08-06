@@ -49,13 +49,15 @@ watch(() => props.open, (isOpen) => {
     deleting.value = false
     formProjectCategoryId.value = null
     formColorScheme.value = null
-    // Setting projectId last triggers the watcher (fills category/colour/name for work).
     formProjectId.value = init?.projectId ?? null
+    // Populate directly rather than leaning on the watcher — reopening the same
+    // project leaves formProjectId unchanged, so the watcher wouldn't fire.
+    fillFromProject(formProjectId.value)
     itemType.value = init?.itemType ?? null
 })
 
-// When a project is chosen, locate its category for colour/name.
-watch(formProjectId, (pid) => {
+// Locate a project's category to fill colour/name.
+function fillFromProject(pid: string | null) {
     if (!pid) return
     for (const cat of Object.values(props.projectCategories)) {
         const project = cat.projects[pid]
@@ -66,7 +68,10 @@ watch(formProjectId, (pid) => {
             return
         }
     }
-})
+}
+
+// When a project is chosen interactively (project selector), fill colour/name.
+watch(formProjectId, (pid) => fillFromProject(pid))
 
 const formProjectOptions = computed(() => {
     const id = formProjectCategoryId.value
