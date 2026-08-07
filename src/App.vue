@@ -1,5 +1,8 @@
 <script setup lang="ts">
-import { RouterLink, RouterView, useRoute } from 'vue-router'
+import { RouterLink, RouterView, useRoute, useRouter } from 'vue-router'
+import { Capacitor } from '@capacitor/core'
+import { App as CapacitorApp } from '@capacitor/app'
+import type { PluginListenerHandle } from '@capacitor/core'
 
 import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useSyncEngine } from '@/composables/useSyncEngine'
@@ -91,6 +94,22 @@ onBeforeUnmount(() => {
 })
 
 const route = useRoute()
+const router = useRouter()
+
+// Android hardware back button: step back through router history like the web,
+// exiting the app only when there's nowhere left to go back to. Native only.
+let backButtonHandle: PluginListenerHandle | null = null
+onMounted(async () => {
+  if (!Capacitor.isNativePlatform()) return
+  backButtonHandle = await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+    if (canGoBack) router.back()
+    else CapacitorApp.exitApp()
+  })
+})
+
+onBeforeUnmount(() => {
+  backButtonHandle?.remove()
+})
 
 </script>
 

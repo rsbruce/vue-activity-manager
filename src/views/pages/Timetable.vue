@@ -159,7 +159,6 @@ onUnmounted(() => clearInterval(timer))
             :calendar="calendar"
             :habit-table="habitTable"
             :display-start="localDisplayStart"
-            :display-days="displayDays"
             :present-moment="presentMoment"
             @open-modal="openModal"
             @open-modal-for-item="(id) => openModalForItem(id)"

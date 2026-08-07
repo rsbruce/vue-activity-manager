@@ -11,7 +11,6 @@ type TimetablePageData = TimetableWindow & SummaryResult & {
     projectCategories: TimetableProjectCategories
     activeProjects: Project[]
     displayStart: string
-    displayDays: number
     weeks: number
 }
 
@@ -34,7 +33,6 @@ export const timetableController = defineController<TimetablePageData>(async () 
         projectCategories,
         activeProjects,
         displayStart: displayStart.toISOString(),
-        displayDays: 7,
         weeks: 4,
     }
 })
