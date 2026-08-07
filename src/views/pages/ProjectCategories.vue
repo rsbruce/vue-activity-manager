@@ -43,7 +43,7 @@ const reorder = async (items: { id: string; order: number | null }[]) => {
 </script>
 
 <template>
-    <div class="py-6 grid grid-cols-2 gap-2 w-full">
+    <div class="py-6 grid lg:grid-cols-2 gap-2 w-full">
         <div class="space-y-6">
             <div class="flex gap-2 items-center">
                 <h2 class="text-xl underline">Categories</h2>

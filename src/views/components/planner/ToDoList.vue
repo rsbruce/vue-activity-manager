@@ -23,7 +23,7 @@ function add() {
 </script>
 
 <template>
-    <div class="bg-main p-2 rounded-md space-y-2" :data-model-theme="theme">
+    <div class="bg-main p-2 rounded-md space-y-2 overflow-hidden" :data-model-theme="theme">
         <h3 class="underline text-xl text-black">{{ projectName }}</h3>
         <form @submit.prevent="add">
             <div class="flex gap-2">

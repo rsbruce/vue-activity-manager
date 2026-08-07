@@ -96,7 +96,7 @@ const route = useRoute()
 
 <template>
   <MobileNav :links="NAV_LINKS" />
-  <div class="container max-w-5xl mx-auto pt-2 md:pt-4 mb-10">
+  <div class="container max-w-5xl mx-auto pt-2 md:pt-4 mb-10 px-1">
     <nav class="hidden md:flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
         <RouterLink v-for="link in NAV_LINKS" :key="link.to" :to="link.to">{{ link.label }}</RouterLink>
     </nav>
