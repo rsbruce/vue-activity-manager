@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Event } from '@/types/events';
-import type { Person } from '@/types/people';
 import { computed, ref } from 'vue';
+import { peopleSummary } from '@/utils/people';
 
 const props = defineProps({
     events: {
@@ -55,14 +55,6 @@ function formatDate(dt: string | null): string {
     return new Date(dt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
-function peopleWith(people: Person[] | undefined): string {
-    if (!people?.length) return '—'
-    const sorted = [...people].sort((a, b) => (b.events_count || 0) - (a.events_count || 0))
-    const named = sorted.slice(0, 2).map(p => `${p.firstname} ${p.lastname || ''}`.trim())
-    const extra = sorted.length - 2
-    if (extra > 0) return named.join(', ') + ` + ${extra} more`
-    return named.join(', ')
-}
 </script>
 
 <template>
@@ -102,7 +94,7 @@ function peopleWith(people: Person[] | undefined): string {
                         <RouterLink :to="`/events/${event.id}`">{{ event.name }}</RouterLink>
                     </td>
                     <td class="py-2 pr-4">{{ formatDate(event.start_datetime) }}</td>
-                    <td class="py-2 text-sm text-gray-300">{{ peopleWith(event.people) }}</td>
+                    <td class="py-2 text-sm text-gray-300">{{ peopleSummary(event.people) }}</td>
                 </tr>
                 <tr v-if="!events.length">
                     <td colspan="3" class="py-2 text-gray-400">No events.</td>

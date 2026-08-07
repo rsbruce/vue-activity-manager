@@ -5,8 +5,8 @@ import { getProjectsForPlanner, getToDoListProject } from '@/data/projects'
 import type { Event } from '@/types/events'
 import { completeObjective, uncompleteObjective, createObjective, type DueDateObjective } from '@/data/objectives'
 import { formatDueDateParts } from '@/utils/dueDate'
+import { peopleSummary } from '@/utils/people'
 import ToDoList from '../components/planner/ToDoList.vue'
-import type { Person } from '@/types/people.ts'
 
 const props = defineProps<{
     projectCategories: ProjectCategory[]
@@ -65,14 +65,6 @@ async function addToDoObjective(name: string) {
     await reloadToDoList()
 }
 
-function peopleWith(people: Person[] | undefined): string {
-    if (!people?.length) return '—'
-    const sorted = [...people].sort((a, b) => (b.events_count || 0) - (a.events_count || 0))
-    const named = sorted.slice(0, 2).map(p => `${p.firstname} ${p.lastname || ''}`.trim())
-    const extra = sorted.length - 2
-    if (extra > 0) return named.join(', ') + ` + ${extra} more`
-    return named.join(', ')
-}
 </script>
 
 <template>
@@ -85,7 +77,7 @@ function peopleWith(people: Person[] | undefined): string {
                 </h4>
                 <div class="text-sm">{{ event.start_datetime ? (new Date(event.start_datetime).toLocaleString('en-GB', {'weekday': 'long', 'day': 'numeric', 'month': 'long'})) : ''}}</div>
                 <div v-if="event.people?.length" class="text-sm italic">
-                    With: {{ peopleWith(event.people) }}
+                    With: {{ peopleSummary(event.people) }}
                 </div>
                 <div v-else class="text-sm italic">
                     Solo
