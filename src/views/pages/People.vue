@@ -160,7 +160,8 @@ const pagedPeople = computed(() => {
         </div>
 
         <div class="space-y-2">
-            <table class="w-full table-fixed border-collapse text-white">
+            <div class="overflow-x-auto">
+            <table class="w-full min-w-[44rem] table-fixed border-collapse text-white">
                 <colgroup>
                     <col class="w-60" />
                     <col class="w-24" />
@@ -219,6 +220,7 @@ const pagedPeople = computed(() => {
                     </tr>
                 </tbody>
             </table>
+            </div>
             <div class="text-sm text-gray-400 pt-2">
                 Showing {{ (currentPage - 1) * PAGE_SIZE + 1 }}–{{ Math.min(currentPage * PAGE_SIZE, people.length) }} of {{ people.length }}
             </div>
