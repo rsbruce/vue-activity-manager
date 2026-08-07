@@ -2,6 +2,7 @@ declare global {
     interface Date {
         isoDate(): string
         isoTime(): string
+        isoDateTime(): string
         addDays(days: number): Date
         addHours(hours: number): Date
         addMinutes(minutes: number): Date
@@ -20,6 +21,12 @@ Date.prototype.isoTime = function (): string {
     const h = String(this.getHours()).padStart(2, '0')
     const m = String(this.getMinutes()).padStart(2, '0')
     return `${h}:${m}`
+}
+
+// Local wall-clock datetime, YYYY-MM-DDTHH:mm — matches how event/start datetimes
+// are stored, so it's directly comparable to them.
+Date.prototype.isoDateTime = function (): string {
+    return `${this.isoDate()}T${this.isoTime()}`
 }
 
 Date.prototype.addDays = function (days: number): Date {

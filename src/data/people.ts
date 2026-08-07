@@ -11,9 +11,7 @@ export async function getAllPeople(): Promise<Person[]>
     // (YYYY-MM-DDTHH:mm), so the past/future comparisons below sort correctly.
     // Bound to each of the four placeholders — without it they were NULL, which
     // made last-seen / next-event always resolve to nothing.
-    const now = new Date()
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
+    const nowStr = new Date().isoDateTime()
 
     const people = await query<Person>(`
         SELECT people.*, 

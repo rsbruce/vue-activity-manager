@@ -81,11 +81,8 @@ export async function getAllEventsWithPeople(): Promise<Event[]> {
 }
 
 export async function getFutureEvents(number = 0): Promise<Event[]> {
-    
-    const now = new Date()
-    const pad = (n: number) => String(n).padStart(2, '0')
-    const nowStr = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`
-    
+    const nowStr = new Date().isoDateTime()
+
     const events = await query<Event>(
         'SELECT * FROM events WHERE project_id IS NULL AND deleted_at IS NULL AND start_datetime > ? ORDER BY start_datetime LIMIT ?',
         [nowStr, number]
