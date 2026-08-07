@@ -2,18 +2,19 @@
 import { computed, ref, watch} from 'vue'
 import type { ProjectCategory, Project, Objective } from '@/types/projects'
 import { getProjectsForPlanner, getToDoListProject } from '@/data/projects'
+import type { Event } from '@/types/events'
 import { completeObjective, uncompleteObjective, createObjective, type DueDateObjective } from '@/data/objectives'
 import { formatDueDateParts } from '@/utils/dueDate'
 import ToDoList from '../components/planner/ToDoList.vue'
+import type { Person } from '@/types/people.ts'
 
 const props = defineProps<{
     projectCategories: ProjectCategory[]
     toDoList: Project | null
     toDoListId: string | null
     dueDateObjectives: DueDateObjective[]
+    nextEvents: Event[]
 }>()
-
-const view = ref<'projects' | 'timetable'>('projects')
 
 // ── Local, navigable copies ───────────────────────────────────────────
 const toDoList = ref<Project | null>(props.toDoList)
@@ -64,9 +65,34 @@ async function addToDoObjective(name: string) {
     await reloadToDoList()
 }
 
+function peopleWith(people: Person[] | undefined): string {
+    if (!people?.length) return '—'
+    const sorted = [...people].sort((a, b) => (b.events_count || 0) - (a.events_count || 0))
+    const named = sorted.slice(0, 2).map(p => `${p.firstname} ${p.lastname || ''}`.trim())
+    const extra = sorted.length - 2
+    if (extra > 0) return named.join(', ') + ` + ${extra} more`
+    return named.join(', ')
+}
 </script>
 
 <template>
+    <div class="space-y-2 mb-10 mt-6">
+        <h2 class="text-lg underline">Upcoming events</h2>
+        <div class="mb-4 gap-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+            <div v-for="event in nextEvents" data-model-theme="gray" class="bg-main px-2 py-1 rounded-md">
+                <h4 class="font-semibold text-lg">
+                    <RouterLink :to="`/events/${event.id}`">{{ event.name }}</RouterLink>
+                </h4>
+                <div class="text-sm">{{ event.start_datetime ? (new Date(event.start_datetime).toLocaleString('en-GB', {'weekday': 'long', 'day': 'numeric', 'month': 'long'})) : ''}}</div>
+                <div v-if="event.people?.length" class="text-sm italic">
+                    With: {{ peopleWith(event.people) }}
+                </div>
+                <div v-else class="text-sm italic">
+                    Solo
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="grid lg:grid-cols-2 gap-2">
         <ToDoList
             v-if="toDoList && toDoListCategory"

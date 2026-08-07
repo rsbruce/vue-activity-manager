@@ -24,7 +24,6 @@ const props = defineProps<{
     projectCategories: TimetableProjectCategories
     activeProjects: Project[]
     displayStart: string
-    displayDays: number
     weeks: number
 }>()
 
