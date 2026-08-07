@@ -38,25 +38,24 @@ export async function createEvent(input: {
     return event;
 }
 
-export async function getAllEventsWithPeople(): Promise<Event[]> {
-    const events = await query<Event>(
-        'SELECT * FROM events WHERE project_id IS NULL AND deleted_at IS NULL ORDER BY start_datetime DESC',
-    )
-
+// Attach attendees to the given events in place, each carrying that person's
+// total (non-deleted) events_count. Queries all attendee records and attaches
+// only those whose event is in the passed set. Shared by the event-list queries.
+async function attachPeople(events: Event[]): Promise<void> {
     const eventsById: Record<string, Event> = {}
     events.forEach(event => eventsById[event.id] = event)
 
     const peopleAtEventRecords = await query<Person & {event_id: string}>(
-        `SELECT 
+        `SELECT
             people.*,
             person_at_event.event_id as event_id,
-            (SELECT COUNT(*) FROM events 
-                INNER JOIN person_at_event ON person_at_event.event_id = events.id 
-                WHERE people.id = person_at_event.person_id 
+            (SELECT COUNT(*) FROM events
+                INNER JOIN person_at_event ON person_at_event.event_id = events.id
+                WHERE people.id = person_at_event.person_id
                 AND events.deleted_at IS NULL
                 AND people.deleted_at IS NULL
             ) as events_count
-        FROM people INNER JOIN person_at_event ON person_at_event.person_id = people.id 
+        FROM people INNER JOIN person_at_event ON person_at_event.person_id = people.id
             WHERE people.deleted_at IS NULL
             AND person_at_event.deleted_at IS NULL
         `
@@ -71,7 +70,13 @@ export async function getAllEventsWithPeople(): Promise<Event[]> {
 
         event.people.push(record as Person)
     })
+}
 
+export async function getAllEventsWithPeople(): Promise<Event[]> {
+    const events = await query<Event>(
+        'SELECT * FROM events WHERE project_id IS NULL AND deleted_at IS NULL ORDER BY start_datetime DESC',
+    )
+    await attachPeople(events)
     return events
 }
 
@@ -85,35 +90,7 @@ export async function getFutureEvents(number = 0): Promise<Event[]> {
         'SELECT * FROM events WHERE project_id IS NULL AND deleted_at IS NULL AND start_datetime > ? ORDER BY start_datetime LIMIT ?',
         [nowStr, number]
     )
-    const eventsById: Record<string, Event> = {}
-    events.forEach(event => eventsById[event.id] = event)
-
-    const peopleAtEventRecords = await query<Person & {event_id: string}>(
-        `SELECT 
-            people.*,
-            person_at_event.event_id as event_id,
-            (SELECT COUNT(*) FROM events 
-                INNER JOIN person_at_event ON person_at_event.event_id = events.id 
-                WHERE people.id = person_at_event.person_id 
-                AND events.deleted_at IS NULL
-                AND people.deleted_at IS NULL
-            ) as events_count
-        FROM people INNER JOIN person_at_event ON person_at_event.person_id = people.id 
-            WHERE people.deleted_at IS NULL
-            AND person_at_event.deleted_at IS NULL
-        `
-    )
-    peopleAtEventRecords.forEach((record) => {
-        const event = eventsById[record.event_id]
-        if (!event) return
-
-        if (!event.people) {
-            event.people = []
-        }
-
-        event.people.push(record as Person)
-    })
-
+    await attachPeople(events)
     return events
 }
 
