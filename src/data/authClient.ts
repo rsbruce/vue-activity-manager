@@ -1,4 +1,5 @@
 import { Preferences } from '@capacitor/preferences'
+import { configureRunner } from './notifications'
 
 // PoC token storage. Tokens live in Preferences (plaintext) and we use the
 // NATIVE auth routes on every platform so the tokens come back in the response
@@ -21,11 +22,15 @@ export async function getRefreshToken(): Promise<string | null> {
 async function setTokens(accessToken: string, refreshToken: string): Promise<void> {
   await Preferences.set({ key: ACCESS_KEY, value: accessToken })
   await Preferences.set({ key: REFRESH_KEY, value: refreshToken })
+  // Keep the background runner's copy of the refresh token in step (rotation
+  // included) so a background wake always authenticates with a valid one.
+  await configureRunner(refreshToken)
 }
 
 async function clearTokens(): Promise<void> {
   await Preferences.remove({ key: ACCESS_KEY })
   await Preferences.remove({ key: REFRESH_KEY })
+  await configureRunner(null)
 }
 
 async function errorMessage(res: Response, fallback: string): Promise<string> {

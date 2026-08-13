@@ -32,18 +32,13 @@ const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
-      path: '/',
-      name: 'Home',
-      component: () => import('../views/pages/HomeView.vue'),
-    },
-    {
       path: '/sync-settings',
       name: 'Sync Settings',
       component: () => import('../views/pages/SyncSettings.vue'),
     },
     {
-      path: '/planner',
-      name: 'Planner',
+      path: '/',
+      name: 'Home',
       component: () => import('../views/pages/Planner.vue'),
       beforeEnter: plannerController.beforeEnter,
       props: plannerController.props

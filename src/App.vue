@@ -8,6 +8,8 @@ import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { useSyncEngine } from '@/composables/useSyncEngine'
 import { refreshCurrent } from '@/router/defineController'
 import { getUserConfig, type UserMode } from '@/data/userConfig'
+import { getRefreshToken } from '@/data/authClient'
+import { initNotifications, configureRunner } from '@/data/notifications'
 import SyncIndicator from '@/views/components/SyncIndicator.vue'
 import MobileNav from '@/views/components/MobileNav.vue'
 
@@ -86,6 +88,11 @@ onMounted(async () => {
     timer = setInterval(onVisible, 30_000)
     document.addEventListener('visibilitychange', onVisible)
   }
+
+  // Seed the background-notifications runner with the current refresh token
+  // (covers the already-logged-in-at-boot case; logins/refreshes update it too).
+  await initNotifications()
+  await configureRunner(await getRefreshToken())
 })
 
 onBeforeUnmount(() => {
