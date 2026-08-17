@@ -16,7 +16,7 @@ import MobileNav from '@/views/components/MobileNav.vue'
 const SERVER_URL = import.meta.env.VITE_SYNC_URL
 
 const NAV_LINKS = [
-  { to: '/planner', label: 'Planner' },
+  { to: '/', label: 'Planner' },
   { to: '/timetable', label: 'Timetable' },
   { to: '/project-categories', label: 'Projects' },
   { to: '/activities/index', label: 'Habits' },
