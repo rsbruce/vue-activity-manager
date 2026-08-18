@@ -2,25 +2,28 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { defineController } from '@/router/defineController'
 import type { ProjectCategory, Project, Objective, Task } from '@/types/projects'
 import { getAllProjectCategories, getProjectCategory } from '@/data/projectCategories'
+import { getObjective, getObjectivesByDueDate, type DueDateObjective } from '@/data/objectives'
 import { getProject, getToDoListProjectId, getActiveProjectsWithArea, getProjectsForPlanner } from '@/data/projects'
-import { getObjective } from '@/data/objectives'
 import { getTask } from '@/data/tasks'
+
 
 // ── Project Categories ────────────────────────────────────────────────
 type CategoriesIndexData = {
     categories: ProjectCategory[]
     projects: Project[]
     toDoListProjectId: string | null
+    dueDateObjectives: DueDateObjective[],
 }
 
 export const categoriesIndexController = defineController<CategoriesIndexData>(
     async (): Promise<CategoriesIndexData> => {
-        const [categories, projects, toDoListProjectId] = await Promise.all([
+        const [categories, projects, toDoListProjectId, dueDateObjectives] = await Promise.all([
             getAllProjectCategories(),
             getProjectsForPlanner(null),
             getToDoListProjectId(),
+            getObjectivesByDueDate(),
         ])
-        return { categories, projects, toDoListProjectId }
+        return { categories, projects, toDoListProjectId, dueDateObjectives }
     },
 )
 

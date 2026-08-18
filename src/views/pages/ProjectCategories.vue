@@ -1,16 +1,19 @@
 <script setup lang="ts">
 import type { Project, ProjectCategory } from '@/types/projects'
-import { reactive, ref } from 'vue'
+import { reactive, ref, computed } from 'vue'
 import { refreshCurrent } from '@/router/defineController'
 import { createProjectCategory, reorderProjectCategories } from '@/data/projectCategories'
 import { setToDoListProject, clearToDoListProject } from '@/data/projects'
 import ReorderingModal from '../components/projects/ReorderingModal.vue'
 import ProjectAreaActionItems from '../components/planner/ProjectAreaActionItems.vue'
+import { type DueDateObjective } from '@/data/objectives'
+import { formatDueDateParts } from '@/utils/dueDate'
 
 const props = defineProps<{
     categories: ProjectCategory[]
     projects: Project[]
     toDoListProjectId: string | null
+    dueDateObjectives: DueDateObjective[]
 }>()
 
 // Selecting a project immediately persists it as the to-do list project;
@@ -24,6 +27,34 @@ const setToDoProject = async () => {
     }
     await refreshCurrent()
 }
+
+// Objectives with a due date, grouped by day (the list arrives ordered by
+// date), then by project category within each day.
+type CategoryGroup = { key: string; name: string; color_scheme: string | null; objectives: DueDateObjective[] }
+type DateGroup = { date: string; label: string; relative: string; categories: CategoryGroup[] }
+
+
+const objectivesByDueDate = computed(() => {
+    const groups: DateGroup[] = []
+    for (const obj of props.dueDateObjectives) {
+        if (!obj.due_date) continue
+        let dateGroup = groups[groups.length - 1]
+        if (!dateGroup || dateGroup.date !== obj.due_date) {
+            const { label, relative } = formatDueDateParts(obj.due_date)
+            dateGroup = { date: obj.due_date, label, relative, categories: [] }
+            groups.push(dateGroup)
+        }
+        const key = obj.project_category_id ?? ''
+        let category = dateGroup.categories.find((c) => c.key === key)
+        if (!category) {
+            const name = props.categories.find((pc) => pc.id === obj.project_category_id)?.name ?? ''
+            category = { key, name, color_scheme: obj.color_scheme, objectives: [] }
+            dateGroup.categories.push(category)
+        }
+        category.objectives.push(obj)
+    }
+    return groups
+})
 
 const form = reactive({ name: '', color_scheme: 'amber' })
 
@@ -43,6 +74,30 @@ const reorder = async (items: { id: string; order: number | null }[]) => {
 </script>
 
 <template>
+    <div class="grid lg:grid-cols-2">
+        <div class="space-y-4">
+            <div v-for="group in objectivesByDueDate" :key="group.date">
+                <h3 class="font-semibold border-b flex justify-between items-baseline gap-2">
+                    <span>{{ group.label }}</span>
+                    <span class="text-sm font-normal">{{ group.relative }}</span>
+                </h3>
+                <div class="space-y-1 mt-1">
+                    <ul
+                        v-for="category in group.categories"
+                        :key="category.key"
+                        class="bg-main rounded-md px-2 py-1 text-black list-disc"
+                        :data-model-theme="category.color_scheme ?? 'gray'"
+                    >
+                        <li v-if="category.name" class="list-none font-semibold">{{ category.name }}</li>
+                        <li v-for="obj in category.objectives" :key="obj.id" class="ml-4">
+                            <RouterLink :to="`/objectives/${obj.id}`">{{ obj.name }}</RouterLink>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <p v-if="!objectivesByDueDate.length">No objectives with a due date.</p>
+        </div>
+    </div>
     <div class="py-6 grid lg:grid-cols-2 gap-2 w-full">
         <div class="space-y-6">
             <div class="flex gap-2 items-center">

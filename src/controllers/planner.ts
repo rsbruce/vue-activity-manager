@@ -13,7 +13,6 @@ type PlannerData = {
     projectCategories: ProjectCategory[]
     toDoList: Project | null
     toDoListId: string | null
-    dueDateObjectives: DueDateObjective[],
     nextEvents: Event[]
 }
 
@@ -23,20 +22,17 @@ export const plannerController = defineController<PlannerData>(async () => {
     const [
         projectCategories,
         toDoList,
-        dueDateObjectives,
         nextEvents
     ] = await Promise.all([
         getAllProjectCategories(),
         toDoListId ? getToDoListProject(toDoListId) : Promise.resolve(undefined),
-        getObjectivesByDueDate(),
-        getFutureEvents(4)
+        getFutureEvents(10)
     ])
 
     return {
         projectCategories,
         toDoList: toDoList ?? null,
         toDoListId,
-        dueDateObjectives,
         nextEvents
     }
 })

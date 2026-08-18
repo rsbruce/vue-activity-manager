@@ -38,7 +38,7 @@ const router = createRouter({
     },
     {
       path: '/',
-      name: 'Planner',
+      name: 'Home',
       component: () => import('../views/pages/Planner.vue'),
       beforeEnter: plannerController.beforeEnter,
       props: plannerController.props
