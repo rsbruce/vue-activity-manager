@@ -7,6 +7,7 @@ import { completeObjective, uncompleteObjective, createObjective, type DueDateOb
 import { formatDueDateParts } from '@/utils/dueDate'
 import { peopleSummary } from '@/utils/people'
 import ToDoList from '../components/planner/ToDoList.vue'
+import { query } from '@/db/index.ts'
 
 const props = defineProps<{
     projectCategories: ProjectCategory[]

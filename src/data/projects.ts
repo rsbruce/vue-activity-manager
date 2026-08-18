@@ -170,24 +170,33 @@ export async function reorderProjects(items: { id: string; order: number | null 
     await reorder('projects', items)
 }
 
+// to_do_list_project is a logical singleton, but sync history has left extra,
+// soft-deleted rows. The old `LIMIT 1` (no deleted_at filter, no ORDER BY) could
+// return a soft-deleted NULL row, and which row it returned varied per device by
+// physical row order. Read the latest LIVE row's value instead.
 export async function getToDoListProjectId(): Promise<string | null> {
     const rows = await query<{ to_do_list_project_id: string | null }>(
-        'SELECT to_do_list_project_id FROM to_do_list_project LIMIT 1',
+        `SELECT to_do_list_project_id FROM to_do_list_project
+         WHERE deleted_at IS NULL
+         ORDER BY updated_at DESC LIMIT 1`,
     )
     return rows[0]?.to_do_list_project_id ?? null
 }
 
 export async function setToDoListProject(projectId: string): Promise<void> {
-    const rows = await query<{ id: string }>('SELECT id FROM to_do_list_project LIMIT 1')
+    const rows = await query<{ id: string }>('SELECT id FROM to_do_list_project WHERE deleted_at IS NULL LIMIT 1')
     if (rows[0]) {
-        await exec('UPDATE to_do_list_project SET to_do_list_project_id = ? WHERE id = ?', [projectId, rows[0].id])
+        // Update every live row so the read above can't land on a stale one.
+        await exec('UPDATE to_do_list_project SET to_do_list_project_id = ? WHERE deleted_at IS NULL', [projectId])
     } else {
         await exec('INSERT INTO to_do_list_project (to_do_list_project_id) VALUES (?)', [projectId])
     }
 }
 
 export async function clearToDoListProject(): Promise<void> {
-    await exec('UPDATE to_do_list_project SET to_do_list_project_id = NULL')
+    // Only touch live rows — leave the soft-deleted ones alone (updating them
+    // would needlessly bump updated_at and re-sync them).
+    await exec('UPDATE to_do_list_project SET to_do_list_project_id = NULL WHERE deleted_at IS NULL')
 }
 
 /** All non-deleted projects in non-deleted categories (optionally excluding one),
