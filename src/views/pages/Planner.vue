@@ -87,14 +87,15 @@ async function addToDoObjective(name: string) {
         </div>
     </div>
     <div class="grid lg:grid-cols-2 gap-2">
-        <ToDoList
-            v-if="toDoList && toDoListCategory"
-            :project-name="toDoList.name"
-            :objectives="toDoObjectives"
-            :theme="toDoListCategory.color_scheme"
-            @toggle="handleToggle"
-            @add-objective="addToDoObjective"
-        />
+        <div v-if="toDoList && toDoListCategory">
+            <ToDoList
+                :project-name="toDoList.name"
+                :objectives="toDoObjectives"
+                :theme="toDoListCategory.color_scheme"
+                @toggle="handleToggle"
+                @add-objective="addToDoObjective"
+            />
+        </div>
 
         <div class="space-y-4">
             <div v-for="group in objectivesByDueDate" :key="group.date">
