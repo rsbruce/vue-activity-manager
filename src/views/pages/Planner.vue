@@ -72,16 +72,18 @@ async function addToDoObjective(name: string) {
     <div class="space-y-2 mb-10 mt-6">
         <h2 class="text-lg underline">Upcoming events</h2>
         <div class="mb-4 gap-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-            <div v-for="event in nextEvents" data-model-theme="gray" class="bg-main px-2 py-1 rounded-md">
+            <div v-for="event in nextEvents" data-model-theme="gray" class="bg-main px-2 py-1 rounded-md flex flex-col justify-between">
                 <h4 class="font-semibold text-lg">
                     <RouterLink :to="`/events/${event.id}`">{{ event.name }}</RouterLink>
                 </h4>
-                <div class="text-sm">{{ event.start_datetime ? (new Date(event.start_datetime).toLocaleString('en-GB', {'weekday': 'long', 'day': 'numeric', 'month': 'long'})) : ''}}</div>
-                <div v-if="event.people?.length" class="text-sm italic">
-                    With: {{ peopleSummary(event.people) }}
-                </div>
-                <div v-else class="text-sm italic">
-                    Solo
+                <div class="border-t border-gray-400">
+                    <div class="text-sm">{{ event.start_datetime ? (new Date(event.start_datetime).toLocaleString('en-GB', {'weekday': 'long', 'day': 'numeric', 'month': 'long'})) : ''}}</div>
+                    <div v-if="event.people?.length" class="text-sm italic">
+                        With: {{ peopleSummary(event.people) }}
+                    </div>
+                    <div v-else class="text-sm italic">
+                        Solo
+                    </div>
                 </div>
             </div>
         </div>
