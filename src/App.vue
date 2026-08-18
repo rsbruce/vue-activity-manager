@@ -10,6 +10,7 @@ import { refreshCurrent } from '@/router/defineController'
 import { getUserConfig, type UserMode } from '@/data/userConfig'
 import { getRefreshToken } from '@/data/authClient'
 import { initNotifications, configureRunner } from '@/data/notifications'
+import { setWriteHook } from '@/db'
 import SyncIndicator from '@/views/components/SyncIndicator.vue'
 import MobileNav from '@/views/components/MobileNav.vue'
 
@@ -56,6 +57,34 @@ const doSync = async () => {
   }
 }
 
+// All sync triggers — the local-write hook, the periodic timer, and visibility
+// changes — funnel through here. scheduleSync's trailing debounce coalesces a
+// burst of writes (one user action is often several) into a single sync;
+// runSync's single-flight guard prevents overlapping syncs and re-runs once if a
+// write lands while a sync is in flight, so nothing is left unsynced.
+let syncDebounce: ReturnType<typeof setTimeout> | null = null
+let syncing = false
+let syncDirty = false
+
+const runSync = async () => {
+  if (syncing) { syncDirty = true; return }
+  syncing = true
+  try {
+    do {
+      syncDirty = false
+      await doSync()
+    } while (syncDirty)
+  } finally {
+    syncing = false
+  }
+}
+
+const scheduleSync = (delay = 750) => {
+  if (!isSyncUser.value) return
+  if (syncDebounce) clearTimeout(syncDebounce)
+  syncDebounce = setTimeout(() => { syncDebounce = null; runSync() }, delay)
+}
+
 // The boot screen blocks only while there is nothing to show: a sync user on a
 // fresh (empty) DB waiting on their first sync. Local/fresh users and users
 // with existing data render as soon as the DB is open.
@@ -64,7 +93,7 @@ const blocking = computed(() => !isReady.value || (isSyncUser.value && isDbEmpty
 let timer: ReturnType<typeof setInterval> | null = null
 const onVisible = () => {
   if (document.visibilityState === 'visible' && isReady.value) {
-    doSync()
+    runSync()
   }
 }
 
@@ -84,9 +113,11 @@ onMounted(async () => {
 
   if (isSyncUser.value) {
     if (isDbEmpty.value) status.value = 'Syncing for the first time...'
-    doSync()
+    runSync()
     timer = setInterval(onVisible, 30_000)
     document.addEventListener('visibilitychange', onVisible)
+    // Any local write schedules a (debounced) sync so changes don't sit trapped.
+    setWriteHook(() => scheduleSync())
   }
 
   // Seed the background-notifications runner with the current refresh token
@@ -97,6 +128,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   if (timer) clearInterval(timer)
+  if (syncDebounce) clearTimeout(syncDebounce)
+  setWriteHook(null)
   document.removeEventListener('visibilitychange', onVisible)
 })
 

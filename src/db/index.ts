@@ -11,6 +11,15 @@ function db(): SQLiteAdapter {
   return adapter
 }
 
+// Fired after every local write (exec/transaction, and insert via transaction).
+// The app registers a debounced sync here so local changes don't sit trapped on
+// the device. Deliberately at this layer, not the adapter: the sync engine
+// applies pulled rows straight through the adapter, so those don't re-trigger it.
+let writeHook: (() => void) | null = null
+export function setWriteHook(fn: (() => void) | null): void {
+  writeHook = fn
+}
+
 export function query<T = Record<string, unknown>>(
   sql: string,
   params: unknown[] = [],
@@ -18,8 +27,9 @@ export function query<T = Record<string, unknown>>(
   return db().query<T>(sql, params)
 }
 
-export function exec(sql: string, params: unknown[] = []): Promise<void> {
-  return db().exec(sql, params)
+export async function exec(sql: string, params: unknown[] = []): Promise<void> {
+  await db().exec(sql, params)
+  writeHook?.()
 }
 
 // A write that returns rows (INSERT/UPDATE ... RETURNING *). Runs inside a
@@ -38,6 +48,7 @@ export async function insert<T = Record<string, unknown>>(
   return rows
 }
 
-export function transaction(fn: () => Promise<void>): Promise<void> {
-  return db().transaction(fn)
+export async function transaction(fn: () => Promise<void>): Promise<void> {
+  await db().transaction(fn)
+  writeHook?.()
 }
