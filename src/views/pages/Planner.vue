@@ -6,6 +6,10 @@ import type { Event } from '@/types/events'
 import { completeObjective, uncompleteObjective, createObjective, type DueDateObjective } from '@/data/objectives'
 import { peopleSummary } from '@/utils/people'
 import ToDoList from '../components/planner/ToDoList.vue'
+import ReminderList from '../components/planner/ReminderList.vue'
+import { resolveReminder, unresolveReminder } from '@/data/reminders'
+import type { Reminder } from '@/types/reminders'
+import { refreshCurrent } from '@/router/defineController'
 import { query } from '@/db/index.ts'
 
 const props = defineProps<{
@@ -13,6 +17,7 @@ const props = defineProps<{
     toDoList: Project | null
     toDoListId: string | null
     nextEvents: Event[]
+    reminders: Reminder[]
 }>()
 
 // ── Local, navigable copies ───────────────────────────────────────────
@@ -39,17 +44,28 @@ async function addToDoObjective(name: string) {
     await reloadToDoList()
 }
 
+async function toggleReminder(reminderId: string, nowResolved: boolean) {
+    await (nowResolved ? resolveReminder(reminderId) : unresolveReminder(reminderId))
+    await refreshCurrent()
+}
+
 </script>
 
 <template>
     <div class="grid lg:grid-cols-2 gap-2 mt-6 mb-10">
-        <div v-if="toDoList && toDoListCategory">
+        <div class="space-y-2">
             <ToDoList
+                v-if="toDoList && toDoListCategory"
                 :project-name="toDoList.name"
                 :objectives="toDoObjectives"
                 :theme="toDoListCategory.color_scheme"
                 @toggle="handleToggle"
                 @add-objective="addToDoObjective"
+            />
+            <ReminderList
+                :reminders="reminders"
+                all-link
+                @toggle="toggleReminder"
             />
         </div>
         <div class="space-y-2">

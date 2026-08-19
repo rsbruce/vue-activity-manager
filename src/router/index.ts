@@ -28,6 +28,7 @@ import {
   taskEditController,
 } from '@/controllers/projects.ts'
 import { plannerController } from '@/controllers/planner.ts'
+import { remindersIndexController, reminderShowController } from '@/controllers/reminders.ts'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +51,20 @@ const router = createRouter({
       component: () => import('../views/pages/Timetable.vue'),
       beforeEnter: timetableController.beforeEnter,
       props: timetableController.props
+    },
+    {
+      path: '/reminders',
+      name: 'Reminders',
+      component: () => import('../views/pages/Reminders.vue'),
+      beforeEnter: remindersIndexController.beforeEnter,
+      props: remindersIndexController.props
+    },
+    {
+      path: '/reminders/:id',
+      name: 'Reminder',
+      component: () => import('../views/pages/ReminderShow.vue'),
+      beforeEnter: reminderShowController.beforeEnter,
+      props: reminderShowController.props
     },
     {
       path: '/agenda',

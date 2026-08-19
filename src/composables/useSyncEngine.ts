@@ -173,6 +173,19 @@ CREATE TABLE IF NOT EXISTS "to_do_list_project"(
   foreign key("to_do_list_project_id") references "projects"("id") on delete cascade
 );
 
+CREATE TABLE IF NOT EXISTS "reminders"(
+  "id" text primary key not null default (lower(hex(randomblob(16)))),
+  "name" varchar not null,
+  "date_of_occurrence" date check ("date_of_occurrence" is null or "date_of_occurrence" glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+  "date_of_reminder" date not null check ("date_of_reminder" glob '[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]'),
+  "has_fixed_date_of_occurrence" boolean not null,
+  "project_category_id" text,
+  "created_at" integer default (unixepoch()),
+  "updated_at" integer default (unixepoch()),
+  "deleted_at" integer,
+  foreign key("project_category_id") references "project_categories"("id") on delete cascade
+);
+
 CREATE TRIGGER IF NOT EXISTS "activity_types_updated_at"
 AFTER UPDATE ON "activity_types" FOR EACH ROW
 WHEN NEW."updated_at" = OLD."updated_at"
@@ -276,6 +289,13 @@ AFTER UPDATE ON "to_do_list_project" FOR EACH ROW
 WHEN NEW."updated_at" = OLD."updated_at"
 BEGIN
   UPDATE "to_do_list_project" SET "updated_at" = unixepoch() WHERE rowid = NEW.rowid;
+END;
+
+CREATE TRIGGER IF NOT EXISTS "reminders_updated_at"
+AFTER UPDATE ON "reminders" FOR EACH ROW
+WHEN NEW."updated_at" = OLD."updated_at"
+BEGIN
+  UPDATE "reminders" SET "updated_at" = unixepoch() WHERE rowid = NEW.rowid;
 END;
 `
 
