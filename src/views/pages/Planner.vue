@@ -55,7 +55,7 @@ async function addToDoObjective(name: string) {
         <div class="space-y-2">
             <h2 class="text-lg underline">Upcoming events</h2>
             <div class="mb-4 gap-2 grid grid-cols-1">
-                <div v-for="event in nextEvents" data-model-theme="gray" class="bg-main px-2 py-1 rounded-md flex flex-col justify-between">
+                <div v-for="event in nextEvents" data-model-theme="gray" class="px-2 py-1 rounded-md flex flex-col justify-between" :class="event.people?.length ? 'bg-main' : 'bg-gray-400'">
                     <h4 class="font-semibold text-lg">
                         <RouterLink :to="`/events/${event.id}`">{{ event.name }}</RouterLink>
                     </h4>
