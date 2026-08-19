@@ -17,6 +17,7 @@ import {
 import { timetableController } from '@/controllers/timetable.ts'
 import {
   categoriesIndexController,
+  agendaController,
   categoryShowController,
   categoryEditController,
   projectShowController,
@@ -49,6 +50,13 @@ const router = createRouter({
       component: () => import('../views/pages/Timetable.vue'),
       beforeEnter: timetableController.beforeEnter,
       props: timetableController.props
+    },
+    {
+      path: '/agenda',
+      name: 'Agenda',
+      component: () => import('../views/pages/Agenda.vue'),
+      beforeEnter: agendaController.beforeEnter,
+      props: agendaController.props
     },
     {
       path: '/project-categories',

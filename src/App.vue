@@ -18,8 +18,9 @@ const SERVER_URL = import.meta.env.VITE_SYNC_URL
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
-  { to: '/timetable', label: 'Timetable' },
+  { to: '/agenda', label: 'Agenda' },
   { to: '/project-categories', label: 'Projects' },
+  { to: '/timetable', label: 'Timetable' },
   { to: '/activities/tracking', label: 'Habits' },
   { to: '/events', label: 'Events' },
   { to: '/people', label: 'People' },

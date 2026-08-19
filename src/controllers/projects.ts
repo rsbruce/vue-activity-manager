@@ -12,20 +12,34 @@ type CategoriesIndexData = {
     categories: ProjectCategory[]
     projects: Project[]
     toDoListProjectId: string | null
-    dueDateObjectives: DueDateObjective[],
-    completedThisWeek: CategorisedObjective[]
 }
 
 export const categoriesIndexController = defineController<CategoriesIndexData>(
     async (): Promise<CategoriesIndexData> => {
-        const [categories, projects, toDoListProjectId, dueDateObjectives, completedThisWeek] = await Promise.all([
+        const [categories, projects, toDoListProjectId] = await Promise.all([
             getAllProjectCategories(),
             getProjectsForPlanner(null),
             getToDoListProjectId(),
+        ])
+        return { categories, projects, toDoListProjectId }
+    },
+)
+
+// ── Agenda ────────────────────────────────────────────────────────────
+type AgendaData = {
+    categories: ProjectCategory[]
+    dueDateObjectives: DueDateObjective[]
+    completedThisWeek: CategorisedObjective[]
+}
+
+export const agendaController = defineController<AgendaData>(
+    async (): Promise<AgendaData> => {
+        const [categories, dueDateObjectives, completedThisWeek] = await Promise.all([
+            getAllProjectCategories(),
             getObjectivesByDueDate(),
             getObjectivesCompletedInWeek(startOfWeek(new Date())),
         ])
-        return { categories, projects, toDoListProjectId, dueDateObjectives, completedThisWeek }
+        return { categories, dueDateObjectives, completedThisWeek }
     },
 )
 
