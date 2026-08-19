@@ -22,7 +22,7 @@ watch(syncStatus, (s) => {
   <div class="fixed bottom-0 right-0 p-1.5 rounded-tl-md z-50 bg-slate-900">
     <pre
       v-if="showError && syncError"
-      class="absolute bottom-8 right-0 text-red-400 text-xs max-w-xs whitespace-pre-wrap break-all bg-slate-800 border border-slate-700 rounded-md p-2 shadow-lg"
+      class="absolute bottom-8 right-0 text-red-400 text-xs max-w-xs whitespace-pre-wrap w-max break-all bg-slate-800 border border-slate-700 rounded-md p-2 shadow-lg"
     >{{ syncError }}</pre>
     <div
       @click="onClick"
