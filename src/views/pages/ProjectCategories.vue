@@ -6,7 +6,8 @@ import { createProjectCategory, reorderProjectCategories } from '@/data/projectC
 import { setToDoListProject, clearToDoListProject } from '@/data/projects'
 import ReorderingModal from '../components/projects/ReorderingModal.vue'
 import ProjectAreaActionItems from '../components/planner/ProjectAreaActionItems.vue'
-import { type DueDateObjective } from '@/data/objectives'
+import CategoryObjectiveBox from '../components/projects/CategoryObjectiveBox.vue'
+import { completeObjective, uncompleteObjective, type DueDateObjective, type CategorisedObjective } from '@/data/objectives'
 import { formatDueDateParts } from '@/utils/dueDate'
 
 const props = defineProps<{
@@ -14,6 +15,7 @@ const props = defineProps<{
     projects: Project[]
     toDoListProjectId: string | null
     dueDateObjectives: DueDateObjective[]
+    completedThisWeek: CategorisedObjective[]
 }>()
 
 // Selecting a project immediately persists it as the to-do list project;
@@ -56,6 +58,29 @@ const objectivesByDueDate = computed(() => {
     return groups
 })
 
+// Objectives completed this week, grouped by project category (themed box each).
+const completedByCategory = computed(() => {
+    const groups: CategoryGroup[] = []
+    for (const obj of props.completedThisWeek) {
+        const key = obj.project_category_id ?? ''
+        let category = groups.find((c) => c.key === key)
+        if (!category) {
+            const name = props.categories.find((pc) => pc.id === obj.project_category_id)?.name ?? ''
+            category = { key, name, color_scheme: obj.color_scheme, objectives: [] }
+            groups.push(category)
+        }
+        category.objectives.push(obj)
+    }
+    return groups
+})
+
+// Complete / un-complete straight from the list; reload so the objective moves
+// between the Agenda and Completed columns.
+async function onToggleObjective(id: string, nowComplete: boolean) {
+    await (nowComplete ? completeObjective(id) : uncompleteObjective(id))
+    await refreshCurrent()
+}
+
 const form = reactive({ name: '', color_scheme: 'amber' })
 
 const submit = async () => {
@@ -74,29 +99,39 @@ const reorder = async (items: { id: string; order: number | null }[]) => {
 </script>
 
 <template>
-    <h2 class="text-xl underline mb-4 mt-4">Agenda</h2>
     <div class="grid lg:grid-cols-2 gap-3">
         <div class="space-y-4">
+            <h3 class="text-xl underline mb-4 mt-4">Agenda</h3>
             <div v-for="group in objectivesByDueDate" :key="group.date">
                 <h3 class="font-semibold border-b flex justify-between items-baseline gap-2">
                     <span>{{ group.label }}</span>
                     <span class="text-sm font-normal">{{ group.relative }}</span>
                 </h3>
                 <div class="space-y-1 mt-1">
-                    <ul
+                    <CategoryObjectiveBox
                         v-for="category in group.categories"
                         :key="category.key"
-                        class="bg-main rounded-md px-2 py-1 text-black list-disc"
-                        :data-model-theme="category.color_scheme ?? 'gray'"
-                    >
-                        <li v-if="category.name" class="list-none font-semibold">{{ category.name }}</li>
-                        <li v-for="obj in category.objectives" :key="obj.id" class="ml-4">
-                            <RouterLink :to="`/objectives/${obj.id}`">{{ obj.name }}</RouterLink>
-                        </li>
-                    </ul>
+                        :name="category.name"
+                        :color-scheme="category.color_scheme"
+                        :objectives="category.objectives"
+                        @toggle="onToggleObjective"
+                    />
                 </div>
             </div>
             <p v-if="!objectivesByDueDate.length">No objectives with a due date.</p>
+        </div>
+
+        <div class="space-y-1">
+            <h3 class="text-xl underline mb-11 mt-4">Completed this week</h3>
+            <CategoryObjectiveBox
+                v-for="category in completedByCategory"
+                :key="category.key"
+                :name="category.name"
+                :color-scheme="category.color_scheme"
+                :objectives="category.objectives"
+                @toggle="onToggleObjective"
+            />
+            <p v-if="!completedByCategory.length">Nothing completed yet this week.</p>
         </div>
     </div>
     <div class="py-6 grid lg:grid-cols-2 gap-3 w-full">

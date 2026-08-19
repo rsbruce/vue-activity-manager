@@ -42,21 +42,67 @@ export async function getObjective(id: string): Promise<Objective | undefined> {
     return objective
 }
 
-export type DueDateObjective = Objective & { color_scheme: string | null; project_category_id: string | null }
+// An objective decorated with its project category (id + colour scheme) plus
+// task-count / description meta, for grouping, theming, and CheckableItem.
+export type CategorisedObjective = Objective & {
+    color_scheme: string | null
+    project_category_id: string | null
+    total_tasks?: number
+    incomplete_tasks?: number
+}
+export type DueDateObjective = CategorisedObjective
+
+// Shared columns + joins for the objective-list queries below. The task counts
+// and description flag feed CheckableItem (its task meta, and the checkbox that
+// stays disabled while tasks remain).
+const OBJECTIVE_LIST_SELECT = `
+    objectives.*,
+    pc.id AS project_category_id,
+    pc.color_scheme AS color_scheme,
+    (SELECT COUNT(*) FROM tasks t WHERE t.objective_id = objectives.id AND t.deleted_at IS NULL) AS total_tasks,
+    (SELECT COUNT(*) FROM tasks t WHERE t.objective_id = objectives.id AND t.completed_at IS NULL AND t.deleted_at IS NULL) AS incomplete_tasks,
+    (objectives.description IS NOT NULL AND trim(objectives.description) <> '') AS has_description`
+const OBJECTIVE_LIST_FROM = `
+    FROM objectives
+    LEFT JOIN projects p ON p.id = objectives.project_id AND p.deleted_at IS NULL
+    LEFT JOIN project_categories pc ON pc.id = p.project_category_id AND pc.deleted_at IS NULL`
 
 // Incomplete, non-deleted objectives that have a due date, ordered by date so
 // they can be grouped by day for the planner. Carries the objective's project
 // category (id + colour scheme) for grouping and theming.
 export async function getObjectivesByDueDate(): Promise<DueDateObjective[]> {
     return query<DueDateObjective>(
-        `SELECT objectives.*, pc.id AS project_category_id, pc.color_scheme AS color_scheme
-        FROM objectives
-        LEFT JOIN projects p ON p.id = objectives.project_id AND p.deleted_at IS NULL
-        LEFT JOIN project_categories pc ON pc.id = p.project_category_id AND pc.deleted_at IS NULL
+        `SELECT ${OBJECTIVE_LIST_SELECT} ${OBJECTIVE_LIST_FROM}
         WHERE objectives.due_date IS NOT NULL
             AND objectives.completed_at IS NULL
             AND objectives.deleted_at IS NULL
         ORDER BY objectives.due_date ASC, objectives."order", objectives.name`,
+    )
+}
+
+// Monday 00:00 (local) of the week containing `date`.
+export function startOfWeek(date: Date): Date {
+    const daysSinceMonday = (date.getDay() + 6) % 7 // getDay(): Sun=0 … Sat=6
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate() - daysSinceMonday)
+}
+
+// Objectives completed during the week beginning `weekStart` (a Monday 00:00
+// local), most recent first. Carries the project category for grouping/theming.
+export async function getObjectivesCompletedInWeek(weekStart: Date): Promise<CategorisedObjective[]> {
+    // Compare against completed_at (unixepoch seconds). weekEnd via date
+    // arithmetic (not +7·86400) so it stays correct across a DST boundary.
+    const start = Math.floor(weekStart.getTime() / 1000)
+    const weekEnd = new Date(weekStart.getFullYear(), weekStart.getMonth(), weekStart.getDate() + 7)
+    const end = Math.floor(weekEnd.getTime() / 1000)
+
+    return query<CategorisedObjective>(
+        `SELECT ${OBJECTIVE_LIST_SELECT} ${OBJECTIVE_LIST_FROM}
+        WHERE objectives.completed_at IS NOT NULL
+            AND objectives.completed_at >= ?
+            AND objectives.completed_at < ?
+            AND objectives.deleted_at IS NULL
+        ORDER BY objectives.completed_at DESC, objectives."order", objectives.name`,
+        [start, end],
     )
 }
 
