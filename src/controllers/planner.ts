@@ -8,12 +8,15 @@ import {
 import { getObjectivesByDueDate, type DueDateObjective } from '@/data/objectives'
 import type { Event } from '@/types/events'
 import { getFutureEvents } from '@/data/events'
+import type { Reminder } from '@/types/reminders'
+import { getVisibleReminders } from '@/data/reminders'
 
 type PlannerData = {
     projectCategories: ProjectCategory[]
     toDoList: Project | null
     toDoListId: string | null
     nextEvents: Event[]
+    reminders: Reminder[]
 }
 
 export const plannerController = defineController<PlannerData>(async () => {
@@ -22,17 +25,20 @@ export const plannerController = defineController<PlannerData>(async () => {
     const [
         projectCategories,
         toDoList,
-        nextEvents
+        nextEvents,
+        reminders
     ] = await Promise.all([
         getAllProjectCategories(),
         toDoListId ? getToDoListProject(toDoListId) : Promise.resolve(undefined),
-        getFutureEvents(10)
+        getFutureEvents(10),
+        getVisibleReminders()
     ])
 
     return {
         projectCategories,
         toDoList: toDoList ?? null,
         toDoListId,
-        nextEvents
+        nextEvents,
+        reminders
     }
 })
