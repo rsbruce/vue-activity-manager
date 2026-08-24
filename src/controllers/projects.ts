@@ -30,16 +30,21 @@ type AgendaData = {
     categories: ProjectCategory[]
     dueDateObjectives: DueDateObjective[]
     completedThisWeek: CategorisedObjective[]
+    completedLastWeek: CategorisedObjective[]
 }
 
 export const agendaController = defineController<AgendaData>(
     async (): Promise<AgendaData> => {
-        const [categories, dueDateObjectives, completedThisWeek] = await Promise.all([
+        const thisWeekStart = startOfWeek(new Date())
+        // Last Monday: this week's Monday minus 7 days (date arithmetic, DST-safe).
+        const lastWeekStart = new Date(thisWeekStart.getFullYear(), thisWeekStart.getMonth(), thisWeekStart.getDate() - 7)
+        const [categories, dueDateObjectives, completedThisWeek, completedLastWeek] = await Promise.all([
             getAllProjectCategories(),
             getObjectivesByDueDate(),
-            getObjectivesCompletedInWeek(startOfWeek(new Date())),
+            getObjectivesCompletedInWeek(thisWeekStart),
+            getObjectivesCompletedInWeek(lastWeekStart),
         ])
-        return { categories, dueDateObjectives, completedThisWeek }
+        return { categories, dueDateObjectives, completedThisWeek, completedLastWeek }
     },
 )
 

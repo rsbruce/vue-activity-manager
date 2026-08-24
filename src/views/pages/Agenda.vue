@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { ProjectCategory } from '@/types/projects'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { refreshCurrent } from '@/router/defineController'
 import CategoryObjectiveBox from '../components/projects/CategoryObjectiveBox.vue'
 import { completeObjective, uncompleteObjective, type DueDateObjective, type CategorisedObjective } from '@/data/objectives'
@@ -10,7 +10,13 @@ const props = defineProps<{
     categories: ProjectCategory[]
     dueDateObjectives: DueDateObjective[]
     completedThisWeek: CategorisedObjective[]
+    completedLastWeek: CategorisedObjective[]
 }>()
+
+const selectedWeek = ref<'this' | 'last'>('this')
+const completedObjectives = computed(() =>
+    selectedWeek.value === 'this' ? props.completedThisWeek : props.completedLastWeek,
+)
 
 // Objectives with a due date, grouped by day (the list arrives ordered by
 // date), then by project category within each day.
@@ -42,7 +48,7 @@ const objectivesByDueDate = computed(() => {
 // Objectives completed this week, grouped by project category (themed box each).
 const completedByCategory = computed(() => {
     const groups: CategoryGroup[] = []
-    for (const obj of props.completedThisWeek) {
+    for (const obj of completedObjectives.value) {
         const key = obj.project_category_id ?? ''
         let category = groups.find((c) => c.key === key)
         if (!category) {
@@ -87,7 +93,21 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
         </div>
 
         <div class="space-y-1">
-            <h3 class="text-xl underline mb-11 mt-4">Completed this week</h3>
+            <h3 class="text-xl underline mt-4">Completed Objectives</h3>
+            <div class="flex gap-2 my-2">
+                <button
+                    type="button"
+                    class="px-3 py-0.5 rounded-md"
+                    :class="selectedWeek === 'this' ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'"
+                    @click="selectedWeek = 'this'"
+                >This week</button>
+                <button
+                    type="button"
+                    class="px-3 py-0.5 rounded-md"
+                    :class="selectedWeek === 'last' ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'"
+                    @click="selectedWeek = 'last'"
+                >Last week</button>
+            </div>
             <CategoryObjectiveBox
                 v-for="category in completedByCategory"
                 :key="category.key"
@@ -96,7 +116,7 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
                 :objectives="category.objectives"
                 @toggle="onToggleObjective"
             />
-            <p v-if="!completedByCategory.length">Nothing completed yet this week.</p>
+            <p v-if="!completedByCategory.length">Nothing completed {{ selectedWeek === 'this' ? 'this' : 'last' }} week.</p>
         </div>
     </div>
 </template>
