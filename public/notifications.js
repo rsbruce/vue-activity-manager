@@ -86,6 +86,9 @@ async function runType(type, serverUrl, token, ctx) {
         id: type.id,
         title: notification.title,
         body: notification.body,
+        // Android collapses `body` to one truncated line; `largeBody` supplies
+        // the same content as a BigTextStyle block shown when expanded.
+        largeBody: notification.body,
         scheduleAt: new Date(Date.now() + 1000),
         // Must match the channel the app creates (src/data/notifications.ts);
         // Android drops notifications whose channel doesn't exist.
