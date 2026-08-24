@@ -18,6 +18,7 @@ const Notifications = CapacitorNotifications
 const TYPES = [
   { key: 'dueObjectives', id: 1, hour: 7, path: 'due-objectives' },
   { key: 'todo', id: 2, hour: 8, path: 'todo-items' },
+  { key: 'reminders', id: 4, hour: 9, path: 'reminders' },
   { key: 'events', id: 3, hour: 18, path: 'upcoming-events' },
 ]
 
@@ -52,6 +53,10 @@ function buildNotification(type, data) {
   if (type.key === 'todo') {
     if (!data.items || !data.items.length) return null
     return { title: 'To-do list', body: data.items.map((i) => `• ${i.name}`).join('\n') }
+  }
+  if (type.key === 'reminders') {
+    if (!data.items || !data.items.length) return null
+    return { title: 'Reminders today', body: data.items.map((r) => `• ${r.name}`).join('\n') }
   }
   if (type.key === 'dueObjectives') {
     if (!data.items || !data.items.length) return null
