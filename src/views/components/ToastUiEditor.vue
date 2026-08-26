@@ -46,7 +46,6 @@ onBeforeUnmount(() => {
 }
 .toast-editor .toastui-editor-defaultUI {
     border-radius: 0.375rem;
-    overflow: hidden;
     min-height: 16rem;
 }
 </style>
