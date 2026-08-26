@@ -32,5 +32,21 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div ref="root" class="bg-white text-black rounded-md"></div>
+    <div ref="root" class="toast-editor bg-white text-black rounded-md"></div>
 </template>
+
+<style>
+/* Match the app's font (Instrument Sans) across the editor chrome, the rendered
+   content, and the editing surfaces, and round the outer border to match the
+   app's inputs. */
+.toast-editor .toastui-editor-defaultUI,
+.toast-editor .toastui-editor-contents,
+.toast-editor .ProseMirror {
+    font-family: var(--font-sans, 'Instrument Sans', ui-sans-serif, system-ui, sans-serif);
+}
+.toast-editor .toastui-editor-defaultUI {
+    border-radius: 0.375rem;
+    overflow: hidden;
+    min-height: 16rem;
+}
+</style>
