@@ -25,6 +25,7 @@
     "@fortawesome/vue-fontawesome": "^3.2.0",
     "@tailwindcss/typography": "^0.5.19",
     "@tailwindcss/vite": "^4.3.0",
+    "@toast-ui/editor": "^3.2.2",
     "dompurify": "^3.4.12",
     "marked": "^18.0.5",
     "single-player-sync": "file:../sync_engine_ts",

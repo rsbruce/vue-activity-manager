@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { renderMarkdown } from '@/utils/markdown'
 import DeleteRestoreButton from '../DeleteRestoreButton.vue'
+import ToastUiEditor from '../ToastUiEditor.vue'
 
-const props = defineProps<{
+defineProps<{
     name: string
     description: string
     deletedAt: string | null
@@ -16,10 +15,6 @@ const emit = defineEmits<{
     'trash': []
     'restore': []
 }>()
-
-const activeTab = ref<'write' | 'preview'>('write')
-
-const renderedDescription = computed(() => renderMarkdown(props.description))
 </script>
 
 <template>
@@ -37,33 +32,11 @@ const renderedDescription = computed(() => renderMarkdown(props.description))
             </label>
             <slot name="fields" />
             <div>
-                <div class="flex items-center justify-between mb-1">
-                    <span>Description</span>
-                    <div class="flex md:hidden text-sm border border-white rounded-md overflow-hidden">
-                        <button type="button" @click="activeTab = 'write'"
-                            class="px-3 py-0.5 transition-colors"
-                            :class="activeTab === 'write' ? 'bg-white text-black' : 'text-white'">
-                            Write
-                        </button>
-                        <button type="button" @click="activeTab = 'preview'"
-                            class="px-3 py-0.5 transition-colors"
-                            :class="activeTab === 'preview' ? 'bg-white text-black' : 'text-white'">
-                            Preview
-                        </button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-                    <textarea
-                        rows="10"
-                        class="p-0.5 border rounded-md w-full bg-white text-black"
-                        :class="activeTab === 'write' ? 'block' : 'hidden md:block'"
-                        :value="description"
-                        @input="emit('update:description', ($event.target as HTMLTextAreaElement).value)"
-                    ></textarea>
-                    <div class="p-2 border border-white text-white rounded-lg" :class="activeTab === 'preview' ? 'block' : 'hidden md:block'">
-                        <div v-html="renderedDescription" class="prose prose-invert"></div>
-                    </div>
-                </div>
+                <div class="mb-1">Description</div>
+                <ToastUiEditor
+                    :model-value="description"
+                    @update:model-value="emit('update:description', $event)"
+                />
             </div>
             <button type="submit" class="bg-sky-500 text-white rounded-md border-2 border-black md:max-w-96 mt-8 cursor-pointer">Save</button>
         </form>
