@@ -48,4 +48,15 @@ onBeforeUnmount(() => {
     border-radius: 0.375rem;
     min-height: 16rem;
 }
+
+/* On narrow screens Toast UI shifts toolbar popups by margin-left:-150px, which
+   combined with its JS-set inline `left` throws the heading picker off the left
+   edge. Pin popups to the editor's left so they stay on-screen. */
+@media (max-width: 480px) {
+    .toast-editor .toastui-editor-popup {
+        left: 0 !important;
+        margin-left: 0 !important;
+        right: auto !important;
+    }
+}
 </style>
