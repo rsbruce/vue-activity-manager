@@ -4,6 +4,8 @@ const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 // A rough, human-friendly gap: days, then weeks, months, years.
 function relativeText(diffDays: number): string {
     if (diffDays === 0) return 'today'
+    if (diffDays === -1) return 'yesterday'
+    if (diffDays === 1) return 'tomorrow'
     const n = Math.abs(diffDays)
     let value: number, unit: string
     if (n < 7) { value = n; unit = 'day' }

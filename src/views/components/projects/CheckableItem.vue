@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps<{
     to: string
@@ -9,6 +9,7 @@ const props = defineProps<{
     totalTasks?: number
     childLabel?: string
     hasDescription?: boolean
+    weekdayDate?: boolean
 }>()
 
 const emit = defineEmits<{ toggle: [nowComplete: boolean] }>()
@@ -16,6 +17,15 @@ const emit = defineEmits<{ toggle: [nowComplete: boolean] }>()
 const isComplete = ref(props.completedAt !== null)
 
 watch(() => props.completedAt, (val) => { isComplete.value = val !== null })
+
+// The completed date: 3-letter weekday when weekdayDate is set, else "Aug 26".
+const completedLabel = computed(() => {
+    if (props.completedAt === null) return ''
+    const d = new Date(props.completedAt * 1000)
+    return props.weekdayDate
+        ? d.toLocaleString(undefined, { weekday: 'short' })
+        : d.toLocaleString(undefined, { month: 'short', day: 'numeric' })
+})
 
 const toggle = () => {
     isComplete.value = !isComplete.value
@@ -36,7 +46,7 @@ const toggle = () => {
         <font-awesome-icon v-if="hasDescription" icon="file-lines" class="flex-none text-gray-700 text-sm" />
         </RouterLink>
         <span v-if="completedAt" class="flex-1 text-right text-xs text-gray-500 whitespace-nowrap">
-            {{ new Date(completedAt * 1000).toLocaleString(undefined, { month: 'short', day: 'numeric' }) }}
+            {{ completedLabel }}
         </span>
         <span v-else-if="childLabel && (totalTasks ?? 0) > 0" class="flex-1 text-right text-sm whitespace-nowrap text-gray-500">
             {{ (totalTasks ?? 0) - (incompleteTasks ?? 0) }}/{{ totalTasks }} {{ childLabel }}

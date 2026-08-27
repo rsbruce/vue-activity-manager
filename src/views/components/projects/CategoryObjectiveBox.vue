@@ -6,6 +6,7 @@ defineProps<{
     name: string
     colorScheme: string | null
     objectives: CategorisedObjective[]
+    weekdayDate?: boolean
 }>()
 
 const emit = defineEmits<{ toggle: [id: string, nowComplete: boolean] }>()
@@ -24,6 +25,7 @@ const emit = defineEmits<{ toggle: [id: string, nowComplete: boolean] }>()
             :total-tasks="obj.total_tasks"
             child-label="tasks"
             :has-description="obj.has_description"
+            :weekday-date="weekdayDate"
             @toggle="(nowComplete) => emit('toggle', obj.id, nowComplete)"
         />
     </div>
