@@ -130,6 +130,11 @@ export async function uncompleteObjective(id: string): Promise<void> {
     await exec('UPDATE objectives SET completed_at = NULL WHERE id = ?', [id])
 }
 
+// Set an exact completion time (unixepoch seconds), e.g. from a datetime picker.
+export async function setObjectiveCompletedAt(id: string, seconds: number): Promise<void> {
+    await exec('UPDATE objectives SET completed_at = ? WHERE id = ?', [seconds, id])
+}
+
 export async function reorderObjectives(items: { id: string; order: number | null }[]): Promise<void> {
     await reorder('objectives', items)
 }

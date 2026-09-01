@@ -42,7 +42,7 @@ const toggle = () => {
             :disabled="(incompleteTasks ?? 0) > 0"
             @click="toggle"
         />
-        <RouterLink :to="to" class="font-semibold truncate min-w-12">{{ name }}
+        <RouterLink :to="to" class="font-semibold truncate min-w-0">{{ name }}
         <font-awesome-icon v-if="hasDescription" icon="file-lines" class="flex-none text-gray-700 text-sm" />
         </RouterLink>
         <span v-if="completedAt" class="flex-1 text-right text-xs text-gray-500 whitespace-nowrap">

@@ -3,7 +3,7 @@ import type { Task } from '@/types/projects'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { refreshCurrent } from '@/router/defineController'
-import { updateTask, completeTask, uncompleteTask } from '@/data/tasks'
+import { updateTask, completeTask, uncompleteTask, setTaskCompletedAt } from '@/data/tasks'
 import { softDelete, restore } from '@/data/utils'
 import EditItemForm from '../components/projects/EditItemForm.vue'
 import CompleteToggle from '../components/projects/CompleteToggle.vue'
@@ -32,6 +32,11 @@ const toggleComplete = async () => {
     await refreshCurrent()
 }
 
+const setCompletedAt = async (seconds: number) => {
+    await setTaskCompletedAt(props.task.id, seconds)
+    await refreshCurrent()
+}
+
 const trash = async () => {
     await softDelete(props.task.id, 'tasks')
     await router.push(`/objectives/${props.task.objective_id}`)
@@ -53,7 +58,7 @@ const restoreTask = async () => {
         @restore="restoreTask"
     >
         <template #top>
-            <CompleteToggle :completed-at="task.completed_at" completed-class="bg-emerald-300 border-emerald-700" @toggle="toggleComplete" />
+            <CompleteToggle :completed-at="task.completed_at" completed-class="bg-emerald-300 border-emerald-700" editable @toggle="toggleComplete" @set-completed-at="setCompletedAt" />
         </template>
         <template #fields>
             <label v-if="task.objective?.project?.objectives?.length">

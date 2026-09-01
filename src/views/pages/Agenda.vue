@@ -108,7 +108,7 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
 </script>
 
 <template>
-    <div class="grid lg:grid-cols-2 gap-3">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <div class="space-y-4">
             <h3 class="text-xl underline mb-4 mt-4">Agenda</h3>
             <template v-for="week in objectivesByWeek" :key="week.key">

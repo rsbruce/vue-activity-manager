@@ -3,7 +3,7 @@ import type { Objective } from '@/types/projects'
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { refreshCurrent } from '@/router/defineController'
-import { updateObjective, completeObjective, uncompleteObjective } from '@/data/objectives'
+import { updateObjective, completeObjective, uncompleteObjective, setObjectiveCompletedAt } from '@/data/objectives'
 import { softDelete, restore } from '@/data/utils'
 import EditItemForm from '../components/projects/EditItemForm.vue'
 import CompleteToggle from '../components/projects/CompleteToggle.vue'
@@ -34,6 +34,11 @@ const toggleComplete = async () => {
     await refreshCurrent()
 }
 
+const setCompletedAt = async (seconds: number) => {
+    await setObjectiveCompletedAt(props.objective.id, seconds)
+    await refreshCurrent()
+}
+
 const trash = async () => {
     await softDelete(props.objective.id, 'objectives')
     await router.push(`/projects/${props.objective.project_id}`)
@@ -55,7 +60,7 @@ const restoreObjective = async () => {
         @restore="restoreObjective"
     >
         <template #top>
-            <CompleteToggle :completed-at="objective.completed_at" @toggle="toggleComplete" />
+            <CompleteToggle :completed-at="objective.completed_at" editable @toggle="toggleComplete" @set-completed-at="setCompletedAt" />
         </template>
         <template #fields>
             <label v-if="objective.project?.project_area?.projects?.length">
