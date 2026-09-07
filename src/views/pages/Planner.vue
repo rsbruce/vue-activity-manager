@@ -49,6 +49,12 @@ async function toggleReminder(reminderId: string, nowResolved: boolean) {
     await refreshCurrent()
 }
 
+// "12:00-13:00" from the event's start/end datetimes, like the timetable.
+function timeRange(event: Event): string {
+    if (!event.start_datetime || !event.end_datetime) return ''
+    return `${event.start_datetime.slice(11, 16)}-${event.end_datetime.slice(11, 16)}`
+}
+
 </script>
 
 <template>
@@ -71,16 +77,23 @@ async function toggleReminder(reminderId: string, nowResolved: boolean) {
         <div class="space-y-2">
             <h2 class="text-lg underline">Upcoming events</h2>
             <div class="mb-4 gap-2 grid grid-cols-1">
-                <div v-for="event in nextEvents" data-model-theme="gray" class="px-2 py-1 rounded-md flex flex-col justify-between" :class="event.people?.length ? 'bg-main' : 'bg-gray-400'">
+                <div
+                    v-for="event in nextEvents"
+                    :key="event.id"
+                    :data-model-theme="event.color_scheme ?? 'gray'"
+                    class="px-2 py-1 rounded-md flex flex-col justify-between"
+                    :class="event.project_id || event.people?.length ? 'bg-main' : 'bg-gray-400'"
+                >
                     <h4 class="font-semibold text-lg">
                         <RouterLink :to="`/events/${event.id}`">{{ event.name }}</RouterLink>
                     </h4>
                     <div class="border-t border-gray-400">
                         <div class="text-sm">{{ event.start_datetime ? (new Date(event.start_datetime).toLocaleString('en-GB', {'weekday': 'long', 'day': 'numeric', 'month': 'long'})) : ''}}</div>
+                        <div v-if="timeRange(event)" class="text-sm">{{ timeRange(event) }}</div>
                         <div v-if="event.people?.length" class="text-sm italic">
                             With: {{ peopleSummary(event.people) }}
                         </div>
-                        <div v-else class="text-sm italic">
+                        <div v-else-if="!event.project_id" class="text-sm italic">
                             Solo
                         </div>
                     </div>

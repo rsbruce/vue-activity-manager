@@ -6,7 +6,7 @@ import EventDateTimeInputs from '../EventDateTimeInputs.vue'
 import type { Person } from '@/types/people'
 import type { Project } from '@/types/projects'
 import type { TimetableProjectCategories, TimetableModalInitial } from '@/types/events'
-import { createEvent, updateEvent } from '@/data/events'
+import { createEvent, updateEvent, replicateEvent } from '@/data/events'
 import { softDelete } from '@/data/utils'
 
 const props = defineProps<{
@@ -36,6 +36,11 @@ const formEndDatetime = ref('')
 const formAttendeeIds = ref<string[]>([])
 const deleting = ref(false)
 
+// ── Repeat (weekly replication) screen ────────────────────────────────
+const repeating = ref(false)
+const repeatWeeks = ref(1)
+const repeatConfirming = ref(false)
+
 // Initialise from `initial` each time the modal opens.
 watch(() => props.open, (isOpen) => {
     if (!isOpen) return
@@ -47,6 +52,8 @@ watch(() => props.open, (isOpen) => {
     formAttendeeIds.value = [...(init?.attendeeIds ?? [])]
     selectingProject.value = false
     deleting.value = false
+    repeating.value = false
+    repeatConfirming.value = false
     formProjectCategoryId.value = null
     formColorScheme.value = null
     formProjectId.value = init?.projectId ?? null
@@ -175,6 +182,36 @@ async function remove() {
     emit('deleted')
     close()
 }
+
+// ── Repeat ────────────────────────────────────────────────────────────
+const repeatValid = computed(
+    () => Number.isInteger(repeatWeeks.value) && repeatWeeks.value >= 1 && repeatWeeks.value <= 52,
+)
+const repeatDayOfWeek = computed(() =>
+    formStartDatetime.value ? new Date(formStartDatetime.value).toLocaleDateString(undefined, { weekday: 'long' }) : '',
+)
+const repeatTimeOfDay = computed(() => startTime.value)
+
+function startRepeat() {
+    repeatWeeks.value = 1
+    repeatConfirming.value = false
+    repeating.value = true
+}
+
+async function doRepeat() {
+    if (!repeatValid.value) return
+    const isEvent = itemType.value === 'event'
+    await replicateEvent({
+        name: modelName.value,
+        project_id: isEvent ? null : formProjectId.value,
+        start_datetime: formStartDatetime.value,
+        end_datetime: formEndDatetime.value,
+        person_ids: isEvent ? formAttendeeIds.value : [],
+        weeks: repeatWeeks.value,
+    })
+    emit('saved')
+    close()
+}
 </script>
 
 <template>
@@ -183,8 +220,39 @@ async function remove() {
             <div class="h-full max-w-5xl mx-auto my-6 flex justify-center items-center" @click.self="close">
                 <div class="z-40 px-1 w-fit" @click.stop>
 
+                    <!-- Repeat screen -->
+                    <div v-if="repeating" class="bg-slate-100 rounded-md px-2 py-2 space-y-3 max-w-sm">
+                        <div class="flex justify-between">
+                            <h2 class="text-xl">Repeat event</h2>
+                            <button class="bg-sky-300 px-2 rounded-md border-2 border-black cursor-pointer" @click="close">Cancel</button>
+                        </div>
+                        <p>
+                            Repeat this event every {{ repeatDayOfWeek }} at {{ repeatTimeOfDay }} for the next
+                            <input
+                                type="number"
+                                min="1"
+                                max="52"
+                                v-model.number="repeatWeeks"
+                                class="border border-black rounded-md w-14 text-center mx-1"
+                            />
+                            week{{ repeatWeeks === 1 ? '' : 's' }}.
+                        </p>
+                        <div class="flex justify-end">
+                            <button
+                                v-if="!repeatConfirming"
+                                :disabled="!repeatValid"
+                                class="bg-sky-300 px-2 py-1 rounded-md border-2 border-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                @click="repeatConfirming = true"
+                            >Create</button>
+                            <div v-else class="flex gap-2">
+                                <button class="bg-gray-200 rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="repeatConfirming = false">Cancel</button>
+                                <button class="bg-sky-300 rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="doRepeat">Confirm</button>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Item type selection -->
-                    <div v-if="itemType === null" class="bg-white rounded-md px-2 py-2 space-y-3 w-96">
+                    <div v-else-if="itemType === null" class="bg-white rounded-md px-2 py-2 space-y-3 w-96">
                         <div class="flex justify-between">
                             <h2 class="text-xl">New</h2>
                             <button
@@ -246,17 +314,20 @@ async function remove() {
                                 :attendee-ids="formAttendeeIds"
                                 @update:attendeeIds="formAttendeeIds = $event"
                             />
-                            <div class="flex justify-end gap-2">
-                                <div v-if="modelId" class="space-x-1">
-                                    <button v-if="!deleting" class="bg-red-500 text-white px-2 py-1 rounded-md border-2 border-black w-full cursor-pointer" @click="deleting = true">Delete</button>
-                                    <div v-else class="flex gap-2">
-                                        <button class="w-1/2 bg-gray-200 rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="deleting = false">Cancel</button>
-                                        <button class="w-1/2 bg-red-500 text-white rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="remove">Confirm</button>
+                            <div class="flex items-center gap-2">
+                                <button v-if="modelId && !deleting" class="bg-black text-white px-2 py-1 rounded-md border-2 border-black cursor-pointer" @click="startRepeat">Repeat</button>
+                                <div class="ml-auto flex gap-2">
+                                    <div v-if="modelId" class="space-x-1">
+                                        <button v-if="!deleting" class="bg-red-500 text-white px-2 py-1 rounded-md border-2 border-black w-full cursor-pointer" @click="deleting = true">Delete</button>
+                                        <div v-else class="flex gap-2">
+                                            <button class="w-1/2 bg-gray-200 rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="deleting = false">Cancel</button>
+                                            <button class="w-1/2 bg-red-500 text-white rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="remove">Confirm</button>
+                                        </div>
                                     </div>
+                                    <button v-if="!deleting" :disabled="isTimeInvalid" class="bg-sky-300 px-2 py-1 rounded-md border-2 border-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="save">
+                                        {{ modelId ? 'Update' : 'Create' }}
+                                    </button>
                                 </div>
-                                <button v-if="!deleting" :disabled="isTimeInvalid" class="bg-sky-300 px-2 py-1 rounded-md border-2 border-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="save">
-                                    {{ modelId ? 'Update' : 'Create' }}
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -310,17 +381,20 @@ async function remove() {
                                     />
                                 </div>
                             </div>
-                            <div class="flex justify-end gap-2">
-                                <div v-if="modelId" class="space-x-1">
-                                    <button v-if="!deleting" class="bg-red-500 text-white px-2 py-1 rounded-md border-2 border-black w-full cursor-pointer" @click="deleting = true">Delete</button>
-                                    <div v-else class="flex gap-2">
-                                        <button class="w-1/2 bg-gray-200 rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="deleting = false">Cancel</button>
-                                        <button class="w-1/2 bg-red-500 text-white rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="remove">Confirm</button>
+                            <div class="flex items-center gap-2">
+                                <button v-if="modelId && !deleting" class="bg-black text-white px-2 py-1 rounded-md border-2 border-black cursor-pointer" @click="startRepeat">Repeat</button>
+                                <div class="ml-auto flex gap-2">
+                                    <div v-if="modelId" class="space-x-1">
+                                        <button v-if="!deleting" class="bg-red-500 text-white px-2 py-1 rounded-md border-2 border-black w-full cursor-pointer" @click="deleting = true">Delete</button>
+                                        <div v-else class="flex gap-2">
+                                            <button class="w-1/2 bg-gray-200 rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="deleting = false">Cancel</button>
+                                            <button class="w-1/2 bg-red-500 text-white rounded-md border-2 border-black px-2 py-1 cursor-pointer" @click="remove">Confirm</button>
+                                        </div>
                                     </div>
+                                    <button v-if="!deleting" :disabled="isTimeInvalid || !formProjectId" class="bg-sky-300 px-2 py-1 rounded-md border-2 border-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="save">
+                                        {{ modelId ? 'Update' : 'Create' }}
+                                    </button>
                                 </div>
-                                <button v-if="!deleting" :disabled="isTimeInvalid || !formProjectId" class="bg-sky-300 px-2 py-1 rounded-md border-2 border-black cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed" @click="save">
-                                    {{ modelId ? 'Update' : 'Create' }}
-                                </button>
                             </div>
                         </div>
                     </div>

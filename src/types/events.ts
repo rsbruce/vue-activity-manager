@@ -11,6 +11,7 @@ export type Event = {
     objective_id: string | null;
     deleted_at: string | null;
     people?: Person[];
+    color_scheme?: string | null; // the project category's colour, for work events
     project?: { id: string; name: string };
     objective?: { id: string; name: string };
 }
