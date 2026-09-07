@@ -49,6 +49,14 @@ async function toggleReminder(reminderId: string, nowResolved: boolean) {
     await refreshCurrent()
 }
 
+// Upcoming-events filter: all, work (has a project), or non-work.
+const eventFilter = ref<'all' | 'work' | 'non-work'>('all')
+const filteredEvents = computed(() => {
+    if (eventFilter.value === 'work') return props.nextEvents.filter((e) => e.project_id)
+    if (eventFilter.value === 'non-work') return props.nextEvents.filter((e) => !e.project_id)
+    return props.nextEvents
+})
+
 // "12:00-13:00" from the event's start/end datetimes, like the timetable.
 function timeRange(event: Event): string {
     if (!event.start_datetime || !event.end_datetime) return ''
@@ -76,9 +84,14 @@ function timeRange(event: Event): string {
         </div>
         <div class="space-y-2">
             <h2 class="text-lg underline">Upcoming events</h2>
+            <div class="flex gap-2">
+                <button type="button" class="flex-1 px-3 py-0.5 rounded-md" :class="eventFilter === 'all' ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'" @click="eventFilter = 'all'">All</button>
+                <button type="button" class="flex-1 px-3 py-0.5 rounded-md" :class="eventFilter === 'work' ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'" @click="eventFilter = 'work'">Work</button>
+                <button type="button" class="flex-1 px-3 py-0.5 rounded-md" :class="eventFilter === 'non-work' ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'" @click="eventFilter = 'non-work'">Non-work</button>
+            </div>
             <div class="mb-4 gap-2 grid grid-cols-1">
                 <div
-                    v-for="event in nextEvents"
+                    v-for="event in filteredEvents"
                     :key="event.id"
                     :data-model-theme="event.color_scheme ?? 'gray'"
                     class="px-2 py-1 rounded-md flex flex-col justify-between"
