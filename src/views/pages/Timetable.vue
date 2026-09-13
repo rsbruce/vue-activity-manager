@@ -12,6 +12,7 @@ import TimetableGrid from '../components/timetable/TimetableGrid.vue'
 import CalendarGrid from '../components/timetable/CalendarGrid.vue'
 import HoursWorkedSummary from '../components/timetable/HoursWorkedSummary.vue'
 import TimetableModal from '../components/timetable/TimetableModal.vue'
+import TimesheetExportModal from '../components/timetable/TimesheetExportModal.vue'
 
 const props = defineProps<{
     timetable: TimetableData
@@ -28,6 +29,7 @@ const props = defineProps<{
 }>()
 
 const view = ref<'timetable' | 'calendar' | 'summary'>('timetable')
+const exportModalOpen = ref(false)
 
 // Local, navigable copies (re-queried locally instead of round-tripping a server).
 const localDisplayStart = ref(new Date(props.displayStart))
@@ -172,11 +174,17 @@ onUnmounted(() => clearInterval(timer))
             @open-modal-for-item="(id) => openModalForItem(id)"
         />
 
+        <div v-show="view === 'summary'" class="flex justify-end mb-2">
+            <button class="bg-sky-500 text-white px-3 py-1 rounded-md cursor-pointer" @click="exportModalOpen = true">Export to PDF</button>
+        </div>
+
         <HoursWorkedSummary
             v-show="view === 'summary'"
             :table="summaryTable"
             :color-schemes="summaryColorSchemes"
         />
+
+        <TimesheetExportModal v-model:open="exportModalOpen" :projects="activeProjects" />
 
         <TimetableModal
             v-model:open="modalOpen"

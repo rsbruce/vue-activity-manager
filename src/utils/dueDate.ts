@@ -1,6 +1,14 @@
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
+// 'YYYY-MM-DD' -> 'Fri 4 Sep' (weekday always, no year).
+export function formatWeekdayDayMonth(iso: string): string {
+    if (!iso) return ''
+    const [y, m, d] = iso.slice(0, 10).split('-').map(Number)
+    if (!y || !m || !d) return iso
+    return `${DAYS[new Date(y, m - 1, d).getDay()]} ${d} ${MONTHS[m - 1]}`
+}
+
 // A rough, human-friendly gap: days, then weeks, months, years.
 function relativeText(diffDays: number): string {
     if (diffDays === 0) return 'today'

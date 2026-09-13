@@ -154,6 +154,18 @@ export async function getEventWithPeople(id: string): Promise<Event | undefined>
     return event
 }
 
+// Work events for a project whose (local) date falls within [start, end]
+// inclusive — start/end are YYYY-MM-DD. Ordered chronologically, for timesheets.
+export async function getProjectEventsInRange(projectId: string, start: string, end: string): Promise<Event[]> {
+    return query<Event>(
+        `SELECT * FROM events
+         WHERE project_id = ? AND deleted_at IS NULL
+           AND substr(start_datetime, 1, 10) >= ? AND substr(start_datetime, 1, 10) <= ?
+         ORDER BY start_datetime`,
+        [projectId, start, end],
+    )
+}
+
 export async function getEvent(id: string): Promise<Event | undefined> {
     const events = await query<Event>(
         'SELECT * FROM events WHERE id = ? AND deleted_at IS NULL',
