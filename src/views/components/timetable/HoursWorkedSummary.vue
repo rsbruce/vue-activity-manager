@@ -12,6 +12,9 @@ const days = Array.from({ length: 29 }, (_, idx) => {
     return d
 })
 
+// Mobile shows a shorter window — just the last 14 days.
+const mobileDays = days.slice(-14)
+
 function dayAbbr(d: Date): string {
     return d.toLocaleDateString('en-GB', { weekday: 'short' }).substring(0, 2)
 }
@@ -60,76 +63,110 @@ function mins(minutesWorked: Record<string, number>, d: Date): number {
             <div v-for="(projects, projectAreaName) in table" :key="projectAreaName" :data-model-theme="colorSchemes[projectAreaName]">
                 <div class="font-bold">{{ projectAreaName }}</div>
 
-                <!-- Header row -->
-                <div class="flex justify-between">
-                    <div class="min-w-16 md:min-w-40"></div>
-                    <div class="flex border-b border-gray-700">
-                        <template v-for="(day, idx) in days" :key="idx">
-                            <div
-                                class="p-0.5"
-                                :class="[isMonday(day) ? 'border-l border-gray-700' : '', isFriday(day) ? 'border-r border-gray-500 border-dashed' : '']"
-                            >
-                                <div class="h-4 w-4 text-xs text-center">{{ dayAbbr(day) }}</div>
-                            </div>
-                            <div v-if="isSunday(day) || idx === days.length - 1" class="w-7"></div>
-                        </template>
-                    </div>
-                    <div class="min-w-16 md:min-w-40"></div>
-                </div>
-
-                <!-- Project rows -->
-                <div v-for="(minutesWorked, projectName) in projects" :key="projectName" class="flex justify-between">
-                    <div class="min-w-16 md:hidden truncate">
-                        {{ (projectName as string).split(' ').map(s => s[0] ?? '').join('') }}
-                    </div>
-                    <div class="hidden md:block min-w-40 truncate text-xs">{{ projectName }}</div>
-                    <div class="flex">
-                        <template v-for="(day, idx) in days" :key="idx">
-                            <div
-                                class="relative p-0.5 group"
-                                :class="[isMonday(day) ? 'border-l border-gray-700' : '', isFriday(day) ? 'border-r border-gray-500 border-dashed' : '']"
-                            >
+                <!-- Desktop: one grid per area, projects as rows -->
+                <div class="hidden md:block">
+                    <!-- Header row -->
+                    <div class="flex justify-between">
+                        <div class="min-w-40"></div>
+                        <div class="flex border-b border-gray-700">
+                            <template v-for="(day, idx) in days" :key="idx">
                                 <div
-                                    v-if="mins(minutesWorked as Record<string, number>, day) > 0"
-                                    class="absolute bottom-4 text-xs bg-slate-900 rounded-sm !text-white p-1 hidden group-hover:block pointer-events-none z-10 whitespace-nowrap"
+                                    class="p-0.5"
+                                    :class="[isMonday(day) ? 'border-l border-gray-700' : '', isFriday(day) ? 'border-r border-gray-500 border-dashed' : '']"
                                 >
-                                    {{ roundedHours(mins(minutesWorked as Record<string, number>, day)) }}
+                                    <div class="h-4 w-4 text-xs text-center">{{ dayAbbr(day) }}</div>
                                 </div>
+                                <div v-if="isSunday(day) || idx === days.length - 1" class="w-7"></div>
+                            </template>
+                        </div>
+                        <div class="min-w-40"></div>
+                    </div>
+
+                    <!-- Project rows -->
+                    <div v-for="(minutesWorked, projectName) in projects" :key="projectName" class="flex justify-between">
+                        <div class="min-w-40 truncate text-xs">{{ projectName }}</div>
+                        <div class="flex">
+                            <template v-for="(day, idx) in days" :key="idx">
                                 <div
-                                    class="h-4 w-4 rounded-md border border-gray-300"
-                                    :class="durationStyle(mins(minutesWorked as Record<string, number>, day))"
-                                ></div>
-                            </div>
-                            <div v-if="isSunday(day) || idx === days.length - 1" class="w-7 text-xs">
-                                {{ Math.round(weeklyProjectTotal(minutesWorked as Record<string, number>, day) / 60) }}
-                            </div>
-                        </template>
+                                    class="relative p-0.5 group"
+                                    :class="[isMonday(day) ? 'border-l border-gray-700' : '', isFriday(day) ? 'border-r border-gray-500 border-dashed' : '']"
+                                >
+                                    <div
+                                        v-if="mins(minutesWorked as Record<string, number>, day) > 0"
+                                        class="absolute bottom-4 text-xs bg-slate-900 rounded-sm !text-white p-1 hidden group-hover:block pointer-events-none z-10 whitespace-nowrap"
+                                    >
+                                        {{ roundedHours(mins(minutesWorked as Record<string, number>, day)) }}
+                                    </div>
+                                    <div
+                                        class="h-4 w-4 rounded-md border border-gray-300"
+                                        :class="durationStyle(mins(minutesWorked as Record<string, number>, day))"
+                                    ></div>
+                                </div>
+                                <div v-if="isSunday(day) || idx === days.length - 1" class="w-7 text-xs">
+                                    {{ Math.round(weeklyProjectTotal(minutesWorked as Record<string, number>, day) / 60) }}
+                                </div>
+                            </template>
+                        </div>
+                        <div class="min-w-40"></div>
                     </div>
-                    <div class="min-w-16 md:hidden pl-2">
-                        {{ (projectName as string).split(' ').map(s => s[0] ?? '').join('') }}
+
+                    <!-- Weekly total row -->
+                    <div class="flex justify-between">
+                        <div class="min-w-40 truncate text-xs font-bold">Weekly Total</div>
+                        <div class="flex">
+                            <template v-for="(day, idx) in days" :key="idx">
+                                <div
+                                    class="p-0.5 border-t border-gray-700"
+                                    :class="[isMonday(day) ? 'border-l' : '', isFriday(day) ? 'border-r border-r-white' : '']"
+                                >
+                                    <div class="h-4 w-4"></div>
+                                </div>
+                                <div v-if="isSunday(day) || idx === days.length - 1" class="w-7 text-sm border-t border-gray-700">
+                                    {{ (weeklyAreaTotal(projects as Record<string, Record<string, number>>, day) / 60).toFixed(1) }}
+                                </div>
+                            </template>
+                        </div>
+                        <div class="min-w-40"></div>
                     </div>
-                    <div class="hidden md:block min-w-40"></div>
                 </div>
 
-                <!-- Weekly total row -->
-                <div class="flex justify-between">
-                    <div class="min-w-16 md:hidden truncate font-bold">TOT</div>
-                    <div class="hidden md:block min-w-40 truncate text-xs font-bold">Weekly Total</div>
-                    <div class="flex">
-                        <template v-for="(day, idx) in days" :key="idx">
-                            <div
-                                class="p-0.5 border-t border-gray-700"
-                                :class="[isMonday(day) ? 'border-l' : '', isFriday(day) ? 'border-r border-r-white' : '']"
-                            >
-                                <div class="h-4 w-4"></div>
+                <!-- Mobile: one mini-table per project, full name pinned above (kept
+                     outside the scroll container so it never scrolls sideways) -->
+                <div class="md:hidden space-y-3">
+                    <div v-for="(minutesWorked, projectName) in projects" :key="projectName">
+                        <div class="font-semibold text-sm">{{ projectName }}</div>
+                        <div class="overflow-x-auto">
+                            <div class="w-max">
+                                <div class="flex border-b border-gray-700">
+                                    <template v-for="(day, idx) in mobileDays" :key="idx">
+                                        <div
+                                            class="p-0.5"
+                                            :class="[isMonday(day) ? 'border-l border-gray-700' : '', isFriday(day) ? 'border-r border-gray-500 border-dashed' : '']"
+                                        >
+                                            <div class="h-4 w-4 text-xs text-center">{{ dayAbbr(day) }}</div>
+                                        </div>
+                                        <div v-if="isSunday(day) || idx === mobileDays.length - 1" class="w-7"></div>
+                                    </template>
+                                </div>
+                                <div class="flex">
+                                    <template v-for="(day, idx) in mobileDays" :key="idx">
+                                        <div
+                                            class="p-0.5"
+                                            :class="[isMonday(day) ? 'border-l border-gray-700' : '', isFriday(day) ? 'border-r border-gray-500 border-dashed' : '']"
+                                        >
+                                            <div
+                                                class="h-4 w-4 rounded-md border border-gray-300"
+                                                :class="durationStyle(mins(minutesWorked as Record<string, number>, day))"
+                                            ></div>
+                                        </div>
+                                        <div v-if="isSunday(day) || idx === mobileDays.length - 1" class="w-7 text-xs text-center">
+                                            {{ Math.round(weeklyProjectTotal(minutesWorked as Record<string, number>, day) / 60) }}
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
-                            <div v-if="isSunday(day) || idx === days.length - 1" class="w-7 text-sm border-t border-gray-700">
-                                {{ (weeklyAreaTotal(projects as Record<string, Record<string, number>>, day) / 60).toFixed(1) }}
-                            </div>
-                        </template>
+                        </div>
                     </div>
-                    <div class="min-w-16 md:hidden pl-2"></div>
-                    <div class="hidden md:block min-w-40"></div>
                 </div>
             </div>
         </div>
