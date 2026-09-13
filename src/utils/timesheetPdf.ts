@@ -63,6 +63,9 @@ export async function exportTimesheetPdf(opts: {
             head: [['Date', 'Start-End', 'Duration']],
             body,
             foot: [['', 'Total', hm(total)]],
+            // Grayscale header/footer bars with bold black text (not the default blue).
+            headStyles: { fillColor: [229, 229, 229], textColor: 0, fontStyle: 'bold' },
+            footStyles: { fillColor: [229, 229, 229], textColor: 0, fontStyle: 'bold' },
         })
     } else {
         doc.text('No entries for this period.', 14, y + 10)
