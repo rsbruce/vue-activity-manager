@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import type { ProjectCategory } from '@/types/projects'
+import type { ProjectCategory, Project, Objective } from '@/types/projects'
 import { computed, ref } from 'vue'
 import { refreshCurrent } from '@/router/defineController'
 import CategoryObjectiveBox from '../components/projects/CategoryObjectiveBox.vue'
+import CurrentObjective from '../components/projects/CurrentObjective.vue'
 import { completeObjective, uncompleteObjective, type DueDateObjective, type CategorisedObjective } from '@/data/objectives'
 import { formatDueDateParts } from '@/utils/dueDate'
 import '@/utils/dateExtensions'
@@ -12,6 +13,8 @@ const props = defineProps<{
     dueDateObjectives: DueDateObjective[]
     completedThisWeek: CategorisedObjective[]
     completedLastWeek: CategorisedObjective[]
+    currentObjective: Objective | null
+    activeProjects: Project[]
 }>()
 
 const selectedWeek = ref<'this' | 'last'>('this')
@@ -108,9 +111,12 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
 </script>
 
 <template>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        <div class="space-y-4">
-            <h3 class="text-xl underline mb-4 mt-4">Agenda</h3>
+    <div class="space-y-4">
+        <CurrentObjective :objective="currentObjective" :categories="categories" :active-projects="activeProjects" />
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+            <div class="space-y-4">
+                <h3 class="text-xl underline mb-4 mt-4">Agenda</h3>
             <template v-for="week in objectivesByWeek" :key="week.key">
                 <!-- Strip once, immediately before the first "later" week. -->
                 <div
@@ -181,6 +187,7 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
                 @toggle="onToggleObjective"
             />
             <p v-if="!completedByCategory.length">Nothing completed {{ selectedWeek === 'this' ? 'this' : 'last' }} week.</p>
+        </div>
         </div>
     </div>
 </template>

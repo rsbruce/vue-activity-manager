@@ -2,7 +2,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 import { defineController } from '@/router/defineController'
 import type { ProjectCategory, Project, Objective, Task } from '@/types/projects'
 import { getAllProjectCategories, getProjectCategory } from '@/data/projectCategories'
-import { getObjective, getObjectivesByDueDate, getObjectivesCompletedInWeek, startOfWeek, type DueDateObjective, type CategorisedObjective } from '@/data/objectives'
+import { getObjective, getObjectivesByDueDate, getObjectivesCompletedInWeek, getCurrentObjectiveId, startOfWeek, type DueDateObjective, type CategorisedObjective } from '@/data/objectives'
 import { getProject, getToDoListProjectId, getActiveProjectsWithArea, getProjectsForPlanner } from '@/data/projects'
 import { getTask } from '@/data/tasks'
 
@@ -31,6 +31,8 @@ type AgendaData = {
     dueDateObjectives: DueDateObjective[]
     completedThisWeek: CategorisedObjective[]
     completedLastWeek: CategorisedObjective[]
+    currentObjective: Objective | null
+    activeProjects: Project[]
 }
 
 export const agendaController = defineController<AgendaData>(
@@ -38,13 +40,19 @@ export const agendaController = defineController<AgendaData>(
         const thisWeekStart = startOfWeek(new Date())
         // Last Monday: this week's Monday minus 7 days (date arithmetic, DST-safe).
         const lastWeekStart = new Date(thisWeekStart.getFullYear(), thisWeekStart.getMonth(), thisWeekStart.getDate() - 7)
-        const [categories, dueDateObjectives, completedThisWeek, completedLastWeek] = await Promise.all([
+        const [categories, dueDateObjectives, completedThisWeek, completedLastWeek, currentObjectiveId, activeProjects] = await Promise.all([
             getAllProjectCategories(),
             getObjectivesByDueDate(),
             getObjectivesCompletedInWeek(thisWeekStart),
             getObjectivesCompletedInWeek(lastWeekStart),
+            getCurrentObjectiveId(),
+            getActiveProjectsWithArea(),
         ])
-        return { categories, dueDateObjectives, completedThisWeek, completedLastWeek }
+        // Treat a completed/deleted pointer as "none" so finishing it reverts to
+        // the picker without needing to actively clear the pointer.
+        const pointed = currentObjectiveId ? await getObjective(currentObjectiveId) : undefined
+        const currentObjective = pointed && !pointed.completed_at && !pointed.deleted_at ? pointed : null
+        return { categories, dueDateObjectives, completedThisWeek, completedLastWeek, currentObjective, activeProjects }
     },
 )
 

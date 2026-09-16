@@ -138,3 +138,33 @@ export async function setObjectiveCompletedAt(id: string, seconds: number): Prom
 export async function reorderObjectives(items: { id: string; order: number | null }[]): Promise<void> {
     await reorder('objectives', items)
 }
+
+export async function getIncompleteObjectivesForProject(projectId: string): Promise<Objective[]> {
+    return query<Objective>(
+        `SELECT * FROM objectives WHERE project_id = ? AND completed_at IS NULL AND deleted_at IS NULL ORDER BY "order", name`,
+        [projectId],
+    )
+}
+
+// ── Current objective (a logical singleton pointer, like to_do_list_project) ──
+// Stored in its own one-row table so "only one current" survives sync: LWW on the
+// single row resolves competing devices to one winner (a per-row boolean can't).
+export async function getCurrentObjectiveId(): Promise<string | null> {
+    const rows = await query<{ objective_id: string | null }>(
+        `SELECT objective_id FROM current_objective WHERE deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1`,
+    )
+    return rows[0]?.objective_id ?? null
+}
+
+export async function setCurrentObjective(objectiveId: string): Promise<void> {
+    const rows = await query<{ id: string }>('SELECT id FROM current_objective WHERE deleted_at IS NULL LIMIT 1')
+    if (rows[0]) {
+        await exec('UPDATE current_objective SET objective_id = ? WHERE deleted_at IS NULL', [objectiveId])
+    } else {
+        await exec('INSERT INTO current_objective (objective_id) VALUES (?)', [objectiveId])
+    }
+}
+
+export async function clearCurrentObjective(): Promise<void> {
+    await exec('UPDATE current_objective SET objective_id = NULL WHERE deleted_at IS NULL')
+}

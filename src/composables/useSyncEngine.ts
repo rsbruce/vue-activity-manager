@@ -186,6 +186,15 @@ CREATE TABLE IF NOT EXISTS "reminders"(
   foreign key("project_category_id") references "project_categories"("id") on delete cascade
 );
 
+CREATE TABLE IF NOT EXISTS "current_objective"(
+  "id" text primary key not null default (lower(hex(randomblob(16)))),
+  "objective_id" text,
+  "created_at" integer default (unixepoch()),
+  "updated_at" integer default (unixepoch()),
+  "deleted_at" integer,
+  foreign key("objective_id") references "objectives"("id") on delete cascade
+);
+
 CREATE TRIGGER IF NOT EXISTS "activity_types_updated_at"
 AFTER UPDATE ON "activity_types" FOR EACH ROW
 WHEN NEW."updated_at" = OLD."updated_at"
@@ -296,6 +305,13 @@ AFTER UPDATE ON "reminders" FOR EACH ROW
 WHEN NEW."updated_at" = OLD."updated_at"
 BEGIN
   UPDATE "reminders" SET "updated_at" = unixepoch() WHERE rowid = NEW.rowid;
+END;
+
+CREATE TRIGGER IF NOT EXISTS "current_objective_updated_at"
+AFTER UPDATE ON "current_objective" FOR EACH ROW
+WHEN NEW."updated_at" = OLD."updated_at"
+BEGIN
+  UPDATE "current_objective" SET "updated_at" = unixepoch() WHERE rowid = NEW.rowid;
 END;
 `
 
