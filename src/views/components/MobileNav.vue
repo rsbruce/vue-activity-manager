@@ -1,8 +1,18 @@
 <script setup lang="ts">
 import { ref, watch, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useDemoMode } from '@/composables/useDemoMode'
 
 defineProps<{ links: { to: string; label: string }[] }>()
+const emit = defineEmits<{ purge: [] }>()
+
+const { isDemo } = useDemoMode()
+
+// Close the menu, then ask the app to confirm the purge.
+const onPurge = () => {
+  open.value = false
+  emit('purge')
+}
 
 const route = useRoute()
 const router = useRouter()
@@ -67,6 +77,12 @@ onBeforeUnmount(() => {
         class="text-left cursor-pointer"
       >{{ link.label }}</button>
     </nav>
+    <button
+      v-if="isDemo"
+      type="button"
+      class="mt-auto mx-6 mb-6 bg-red-600 text-white py-3 rounded-md cursor-pointer"
+      @click="onPurge"
+    >Purge demo data</button>
     <div v-if="navigating" class="absolute inset-0 flex items-center justify-center">
       <svg class="animate-spin w-8 h-8 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
         <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>

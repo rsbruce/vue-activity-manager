@@ -197,7 +197,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <MobileNav :links="NAV_LINKS" />
+  <MobileNav :links="NAV_LINKS" @purge="showPurge = true" />
   <div class="container max-w-5xl mx-auto pt-2 md:pt-4 mb-10 px-1">
     <nav class="hidden md:flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
         <RouterLink v-for="link in NAV_LINKS" :key="link.to" :to="link.to">{{ link.label }}</RouterLink>
@@ -217,14 +217,6 @@ onBeforeUnmount(() => {
     </template>
     <SyncIndicator v-if="isSyncUser" />
   </div>
-
-  <!-- Demo: purge button pinned to the bottom on mobile. -->
-  <button
-    v-if="isDemo"
-    type="button"
-    class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-red-600 text-white py-3 text-center cursor-pointer"
-    @click="showPurge = true"
-  >Purge demo data</button>
 
   <DemoModal
     :open="showSeedModal"
