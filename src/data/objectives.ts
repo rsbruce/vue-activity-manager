@@ -47,6 +47,7 @@ export async function getObjective(id: string): Promise<Objective | undefined> {
 export type CategorisedObjective = Objective & {
     color_scheme: string | null
     project_category_id: string | null
+    project_name: string | null
     total_tasks?: number
     incomplete_tasks?: number
 }
@@ -59,6 +60,7 @@ const OBJECTIVE_LIST_SELECT = `
     objectives.*,
     pc.id AS project_category_id,
     pc.color_scheme AS color_scheme,
+    p.name AS project_name,
     (SELECT COUNT(*) FROM tasks t WHERE t.objective_id = objectives.id AND t.deleted_at IS NULL) AS total_tasks,
     (SELECT COUNT(*) FROM tasks t WHERE t.objective_id = objectives.id AND t.completed_at IS NULL AND t.deleted_at IS NULL) AS incomplete_tasks,
     (objectives.description IS NOT NULL AND trim(objectives.description) <> '') AS has_description`

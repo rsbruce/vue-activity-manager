@@ -7,6 +7,7 @@ defineProps<{
     colorScheme: string | null
     objectives: CategorisedObjective[]
     weekdayDate?: boolean
+    to?: string
 }>()
 
 const emit = defineEmits<{ toggle: [id: string, nowComplete: boolean] }>()
@@ -14,7 +15,8 @@ const emit = defineEmits<{ toggle: [id: string, nowComplete: boolean] }>()
 
 <template>
     <div class="bg-main rounded-md px-2 py-1 text-black" :data-model-theme="colorScheme ?? 'gray'">
-        <div v-if="name" class="font-semibold">{{ name }}</div>
+        <RouterLink v-if="name && to" :to="to" class="font-semibold block underline">{{ name }}</RouterLink>
+        <div v-else-if="name" class="font-semibold">{{ name }}</div>
         <CheckableItem
             v-for="obj in objectives"
             :key="obj.id"

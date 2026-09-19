@@ -40,9 +40,11 @@ function weekOffset(iso: string): number {
 }
 
 // Objectives with a due date, grouped by day (the list arrives ordered by
-// date), then by project category within each day.
+// date), then by project within each day (themed by the project's category
+// colour, header linking to the project).
 type CategoryGroup = { key: string; name: string; color_scheme: string | null; objectives: DueDateObjective[] }
-type DateGroup = { date: string; label: string; relative: string; categories: CategoryGroup[] }
+type ProjectGroup = CategoryGroup & { to?: string }
+type DateGroup = { date: string; label: string; relative: string; projects: ProjectGroup[] }
 
 const objectivesByDueDate = computed(() => {
     const groups: DateGroup[] = []
@@ -51,17 +53,22 @@ const objectivesByDueDate = computed(() => {
         let dateGroup = groups[groups.length - 1]
         if (!dateGroup || dateGroup.date !== obj.due_date) {
             const { label, relative } = formatDueDateParts(obj.due_date)
-            dateGroup = { date: obj.due_date, label, relative, categories: [] }
+            dateGroup = { date: obj.due_date, label, relative, projects: [] }
             groups.push(dateGroup)
         }
-        const key = obj.project_category_id ?? ''
-        let category = dateGroup.categories.find((c) => c.key === key)
-        if (!category) {
-            const name = props.categories.find((pc) => pc.id === obj.project_category_id)?.name ?? ''
-            category = { key, name, color_scheme: obj.color_scheme, objectives: [] }
-            dateGroup.categories.push(category)
+        const key = obj.project_id ?? ''
+        let project = dateGroup.projects.find((p) => p.key === key)
+        if (!project) {
+            project = {
+                key,
+                name: obj.project_name ?? '',
+                color_scheme: obj.color_scheme,
+                to: obj.project_id ? `/projects/${obj.project_id}` : undefined,
+                objectives: [],
+            }
+            dateGroup.projects.push(project)
         }
-        category.objectives.push(obj)
+        project.objectives.push(obj)
     }
     return groups
 })
@@ -147,11 +154,12 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
                         </h3>
                         <div class="space-y-1 mt-1">
                             <CategoryObjectiveBox
-                                v-for="category in group.categories"
-                                :key="category.key"
-                                :name="category.name"
-                                :color-scheme="category.color_scheme"
-                                :objectives="category.objectives"
+                                v-for="project in group.projects"
+                                :key="project.key"
+                                :name="project.name"
+                                :to="project.to"
+                                :color-scheme="project.color_scheme"
+                                :objectives="project.objectives"
                                 @toggle="onToggleObjective"
                             />
                         </div>
