@@ -11,8 +11,11 @@ import { getUserConfig, type UserMode } from '@/data/userConfig'
 import { getRefreshToken } from '@/data/authClient'
 import { initNotifications, configureRunner } from '@/data/notifications'
 import { setWriteHook } from '@/db'
+import { useDemoMode } from '@/composables/useDemoMode'
+import { seedDemoData, purgeAllData } from '@/data/demoSeed'
 import SyncIndicator from '@/views/components/SyncIndicator.vue'
 import MobileNav from '@/views/components/MobileNav.vue'
+import DemoModal from '@/views/components/DemoModal.vue'
 
 const SERVER_URL = import.meta.env.VITE_SYNC_URL
 
@@ -30,6 +33,45 @@ const NAV_LINKS = [
 const { isReady, status, isDbEmpty, syncStatus, syncError, init, sync, errorMessage } = useSyncEngine()
 const initError = ref('')
 const firstSyncDone = ref(false)
+
+// ── Demo data ────────────────────────────────────────────────────────────────
+const { isDemo, setDemo, clearDemo } = useDemoMode()
+const seedDismissed = ref(false)
+const seeding = ref(false)
+const showPurge = ref(false)
+const purging = ref(false)
+
+// Offer to seed only for a local (non-sync) user on a genuinely empty DB, once —
+// dismissing ("Start empty") hides it for the session.
+const showSeedModal = computed(
+  () => isReady.value && isDbEmpty.value && !isSyncUser.value && !isDemo.value && !seedDismissed.value,
+)
+
+const onSeed = async () => {
+  seeding.value = true
+  try {
+    await seedDemoData()
+    setDemo()
+    isDbEmpty.value = false
+    await refreshCurrent()
+  } finally {
+    seeding.value = false
+  }
+}
+
+const onPurge = async () => {
+  purging.value = true
+  try {
+    await purgeAllData()
+    clearDemo()
+    isDbEmpty.value = true
+    seedDismissed.value = false
+    showPurge.value = false
+    await refreshCurrent()
+  } finally {
+    purging.value = false
+  }
+}
 
 // Local identity/mode, read from Preferences on boot (not env).
 const userMode = ref<UserMode | null>(null)
@@ -159,6 +201,12 @@ onBeforeUnmount(() => {
   <div class="container max-w-5xl mx-auto pt-2 md:pt-4 mb-10 px-1">
     <nav class="hidden md:flex text-lg border-b mb-2 gap-4 overflow-auto items-center">
         <RouterLink v-for="link in NAV_LINKS" :key="link.to" :to="link.to">{{ link.label }}</RouterLink>
+        <button
+          v-if="isDemo"
+          type="button"
+          class="ml-auto shrink-0 bg-red-600 text-white text-sm px-3 py-1 rounded-md cursor-pointer"
+          @click="showPurge = true"
+        >Purge demo data</button>
     </nav>
     <div v-if="blocking" class="boot">
       <p>{{ bootMessage }}</p>
@@ -169,4 +217,35 @@ onBeforeUnmount(() => {
     </template>
     <SyncIndicator v-if="isSyncUser" />
   </div>
+
+  <!-- Demo: purge button pinned to the bottom on mobile. -->
+  <button
+    v-if="isDemo"
+    type="button"
+    class="md:hidden fixed bottom-0 inset-x-0 z-50 bg-red-600 text-white py-3 text-center cursor-pointer"
+    @click="showPurge = true"
+  >Purge demo data</button>
+
+  <DemoModal
+    :open="showSeedModal"
+    title="Load demo data?"
+    message="This looks like a fresh install. Want to fill the app with a sample of projects, objectives, tasks, events, habits, reminders and people so you can explore every screen? It stays on this device and you can wipe it any time."
+    confirm-label="Load demo data"
+    cancel-label="Start empty"
+    :busy="seeding"
+    @confirm="onSeed"
+    @cancel="seedDismissed = true"
+  />
+
+  <DemoModal
+    :open="showPurge"
+    title="Purge demo data?"
+    message="This permanently deletes all data on this device and returns the app to an empty state. This can't be undone."
+    confirm-label="Purge demo data"
+    cancel-label="Cancel"
+    confirm-class="bg-red-600"
+    :busy="purging"
+    @confirm="onPurge"
+    @cancel="showPurge = false"
+  />
 </template>
