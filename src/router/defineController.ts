@@ -2,6 +2,7 @@ import {reactive} from 'vue'
 import type { NavigationGuard, RouteLocationNormalized } from 'vue-router'
 
 let activeRefresh: (() => Promise<void>) | null = null
+let activeSetRoute: ((route: RouteLocationNormalized) => void) | null = null
 
 export interface Controller<Data extends object> {
     data: Data
@@ -33,6 +34,7 @@ export function defineController<Data extends object>(
         lastRoute = to
         apply(await load(to))
         activeRefresh = refresh
+        activeSetRoute = (route) => { lastRoute = route }
     }
 
     const props = () => ({...data})
@@ -41,7 +43,16 @@ export function defineController<Data extends object>(
 }
 
 export async function refreshCurrent(): Promise<void> {
-    if(activeRefresh) {
+    if (activeRefresh) {
         await activeRefresh()
     }
+}
+
+// beforeEnter doesn't re-run on query/param-only changes, so lastRoute would go
+// stale and refreshCurrent() would reload the route's *original* window. Wiring
+// this to router.afterEach keeps the active controller's route current, so a
+// refresh (e.g. from background sync) reloads whatever the URL now says — that's
+// what lets the timetable put its window in ?start= and survive a refresh.
+export function updateActiveRoute(route: RouteLocationNormalized): void {
+    activeSetRoute?.(route)
 }

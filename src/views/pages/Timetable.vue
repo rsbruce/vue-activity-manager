@@ -6,6 +6,7 @@ import type {
 } from '@/types/events'
 import type { Person } from '@/types/people'
 import type { Project } from '@/types/projects'
+import { useRoute, useRouter } from 'vue-router'
 import { getTimetableWindow, getSummary } from '@/data/timetable'
 import DayNavigator from '../components/timetable/DayNavigator.vue'
 import TimetableGrid from '../components/timetable/TimetableGrid.vue'
@@ -49,6 +50,31 @@ watch(() => props.summaryTable, v => { summaryTable.value = v })
 watch(() => props.summaryColorSchemes, v => { summaryColorSchemes.value = v })
 watch(() => props.displayStart, v => { localDisplayStart.value = new Date(v) })
 
+// The URL is the source of truth for the window: navigating writes ?start=, and
+// the controller reads it — so a background-sync refresh reloads the *navigated*
+// window (via lastRoute tracking) instead of snapping back to today. This watch
+// reloads the window whenever the query changes (nav buttons, back/forward).
+const route = useRoute()
+const router = useRouter()
+
+const todayStartIso = (): string => {
+    const d = new Date()
+    d.setHours(5, 0, 0, 0)
+    return d.isoDate()
+}
+
+function windowStartFromRoute(): Date {
+    const q = route.query.start
+    const d = typeof q === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(q) ? new Date(`${q}T05:00:00`) : new Date()
+    d.setHours(5, 0, 0, 0)
+    return d
+}
+
+watch(() => route.query.start, async () => {
+    localDisplayStart.value = windowStartFromRoute()
+    await loadWindow()
+})
+
 async function loadWindow() {
     const start = localDisplayStart.value
     const win = await getTimetableWindow(start.addDays(-7).isoDate(), start.addDays(35).isoDate())
@@ -64,16 +90,19 @@ async function loadSummary() {
     summaryColorSchemes.value = summary.summaryColorSchemes
 }
 
-async function navigate(offsetDays: number) {
-    localDisplayStart.value = localDisplayStart.value.addDays(offsetDays)
-    await loadWindow()
+function navigate(offsetDays: number) {
+    const next = localDisplayStart.value.addDays(offsetDays)
+    // Advance the local start synchronously so rapid clicks accumulate (the query
+    // watch/URL settle a tick later). Back on today → drop the query so the URL
+    // stays clean and the controller defaults to today; otherwise pin ?start=.
+    localDisplayStart.value = next
+    // replace, not push: a day/week scrubber shouldn't pile up history entries
+    // (or make the back button walk them). The ?start= URL is still shareable.
+    router.replace({ query: next.isoDate() === todayStartIso() ? {} : { start: next.isoDate() } }).catch(() => {})
 }
 
-async function toToday() {
-    const d = new Date()
-    d.setHours(5, 0, 0, 0)
-    localDisplayStart.value = d
-    await loadWindow()
+function toToday() {
+    if (route.query.start) router.replace({ query: {} }).catch(() => {})
 }
 
 // ── Modal ─────────────────────────────────────────────────────────────

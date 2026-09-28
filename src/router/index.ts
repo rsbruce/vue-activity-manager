@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { updateActiveRoute } from '@/router/defineController'
 import { eventsIndexController, eventShowController, editEventController } from '@/controllers/eventsController.ts'
 import {
   activitiesIndexController,
@@ -239,6 +240,13 @@ const router = createRouter({
 
 router.beforeEach(async () => {
   await ready
+})
+
+// Keep the active controller's route current across query/param-only changes
+// (which don't re-run beforeEnter), so refreshCurrent() reloads for the URL as
+// it stands now — see updateActiveRoute.
+router.afterEach((to) => {
+  updateActiveRoute(to)
 })
 
 export default router

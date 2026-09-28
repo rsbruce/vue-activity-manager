@@ -14,8 +14,12 @@ const props = defineProps<{
     theme: string | null
 }>()
 
+// The reorder working copy. Seeded fresh each time the modal opens, and NOT
+// re-synced from props while open — so a background refresh mid-reorder can't
+// reset it out from under the user. Once closed, it tracks props again.
 const localItems = ref([...props.items])
-watch(() => props.items, (val) => { localItems.value = [...val] })
+watch(() => props.open, (open) => { if (open) localItems.value = [...props.items] })
+watch(() => props.items, (val) => { if (!props.open) localItems.value = [...val] })
 
 const emit = defineEmits<{
     'update:open': [boolean]
