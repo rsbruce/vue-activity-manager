@@ -17,3 +17,16 @@ declare module '@toast-ui/editor' {
         destroy(): void
     }
 }
+
+declare module '@toast-ui/editor/viewer' {
+    interface ViewerOptions {
+        el: HTMLElement
+        initialValue?: string
+        usageStatistics?: boolean
+    }
+    export default class Viewer {
+        constructor(options: ViewerOptions)
+        setMarkdown(markdown: string): void
+        destroy(): void
+    }
+}

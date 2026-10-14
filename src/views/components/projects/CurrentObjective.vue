@@ -80,20 +80,21 @@ const onReorder = async (items: { id: string; order: number | null }[]) => {
         <div v-if="objective && !changing" class="space-y-3">
             <div class="rounded-md bg-main px-3 py-2" :data-model-theme="objective.project?.project_area?.color_scheme ?? 'gray'">
             <div class="text-base">
-                <RouterLink v-if="objective.project?.project_area" :to="`/project-categories/${objective.project.project_area.id}`">{{ objective.project.project_area.name }}</RouterLink>
+                <RouterLink v-if="objective.project?.project_area" :to="`/project-categories/${objective.project.project_area.id}`" class="hover:underline">{{ objective.project.project_area.name }}</RouterLink>
                 <span v-if="objective.project?.project_area && objective.project"> / </span>
-                <RouterLink v-if="objective.project" :to="`/projects/${objective.project.id}`">{{ objective.project.name }}</RouterLink>
+                <RouterLink v-if="objective.project" :to="`/projects/${objective.project.id}`" class="hover:underline">{{ objective.project.name }}</RouterLink>
             </div>
-            <div class="text-2xl">{{ objective.name }}</div>
+            <RouterLink :to="`/objectives/${objective.id}`" class="text-2xl hover:underline">{{ objective.name }}</RouterLink>
         </div>
 
         <div v-if="objective.due_date" class="text-sm">Due: {{ formatDueDate(objective.due_date) }}</div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2" :data-model-theme="objective.project?.project_area?.color_scheme">
+        <div class="space-y-2" :data-model-theme="objective.project?.project_area?.color_scheme">
             <ChildItemList
                 :items="objective.tasks ?? []"
                 title="Tasks"
                 base-path="tasks"
+                layout="row"
                 :theme="objective.project?.project_area?.color_scheme"
                 @create="onCreate"
                 @toggle="onToggle"

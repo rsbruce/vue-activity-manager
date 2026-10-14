@@ -18,6 +18,8 @@ const props = defineProps<{
     basePath: string
     childLabel?: string
     theme?: string | null
+    // 'stack' (default): incomplete over completed. 'row': side by side.
+    layout?: 'stack' | 'row'
 }>()
 
 const emit = defineEmits<{
@@ -63,7 +65,7 @@ const modalOpen = ref(false)
 </script>
 
 <template>
-    <div class="space-y-2">
+    <div :class="layout === 'row' ? 'grid grid-cols-1 md:grid-cols-2 gap-2 items-start' : 'space-y-2'">
         <div class="h-fit bg-main rounded-md p-2 space-y-2">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-xl underline">{{ title }}</h2>
