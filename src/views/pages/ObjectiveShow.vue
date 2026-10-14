@@ -1,14 +1,19 @@
 <script setup lang="ts">
 import type { Objective } from '@/types/projects'
 import { refreshCurrent } from '@/router/defineController'
-import { completeObjective, uncompleteObjective } from '@/data/objectives'
+import { completeObjective, uncompleteObjective, setCurrentObjective } from '@/data/objectives'
 import { createTask, completeTask, uncompleteTask, reorderTasks } from '@/data/tasks'
 import ChildItemList from '../components/projects/ChildItemList.vue'
 import CompleteToggle from '../components/projects/CompleteToggle.vue'
 import DescriptionPanel from '../components/projects/DescriptionPanel.vue'
 import { formatDueDate } from '@/utils/dueDate'
 
-const props = defineProps<{ objective: Objective }>()
+const props = defineProps<{ objective: Objective; isCurrent: boolean }>()
+
+const makeCurrent = async () => {
+    await setCurrentObjective(props.objective.id)
+    await refreshCurrent()
+}
 
 const toggleObjectiveComplete = async () => {
     await (props.objective.completed_at ? uncompleteObjective(props.objective.id) : completeObjective(props.objective.id))
@@ -39,8 +44,18 @@ const onReorder = async (items: { id: string; order: number | null }[]) => {
             <span class="whitespace-nowrap">{{ objective.name }}</span>
         </div>
 
-        <div>
+        <div class="flex items-center gap-3">
             <RouterLink :to="`/objectives/${objective.id}/edit`">Edit</RouterLink>
+            <!-- A completed objective can't be current (the Agenda treats it as none). -->
+            <template v-if="!objective.completed_at">
+                <span v-if="isCurrent" class="text-sm bg-sky-700 text-white px-2 py-0.5 rounded-md">Current objective</span>
+                <button
+                    v-else
+                    type="button"
+                    class="bg-sky-500 text-white text-sm px-2 py-0.5 rounded-md cursor-pointer"
+                    @click="makeCurrent"
+                >Set as current objective</button>
+            </template>
         </div>
 
         <CompleteToggle :completed-at="objective.completed_at" @toggle="toggleObjectiveComplete" />

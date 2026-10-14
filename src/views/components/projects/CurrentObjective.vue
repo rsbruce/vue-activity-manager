@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import type { Objective, Project, ProjectCategory } from '@/types/projects'
+import { ref, watch } from 'vue'
+import type { Objective, Project } from '@/types/projects'
 import { refreshCurrent } from '@/router/defineController'
 import { setCurrentObjective, getIncompleteObjectivesForProject } from '@/data/objectives'
 import { createTask, completeTask, uncompleteTask, reorderTasks } from '@/data/tasks'
@@ -10,12 +10,10 @@ import { formatDueDate } from '@/utils/dueDate'
 
 const props = defineProps<{
     objective: Objective | null
-    categories: ProjectCategory[]
     activeProjects: Project[]
 }>()
 
-// ── Empty-state selection (area → project → objective) ────────────────
-const selectedArea = ref('')
+// ── Picker: active-project bubbles → objective dropdown ───────────────
 const selectedProject = ref('')
 const selectedObjective = ref('')
 const objectiveOptions = ref<Objective[]>([])
@@ -23,24 +21,18 @@ const objectiveOptions = ref<Objective[]>([])
 // Shows the picker over an already-set objective, to swap it out.
 const changing = ref(false)
 function startChange() {
-    selectedArea.value = ''
     selectedProject.value = ''
     selectedObjective.value = ''
     objectiveOptions.value = []
     changing.value = true
 }
 
-const projectOptions = computed(() =>
-    selectedArea.value ? props.activeProjects.filter((p) => p.project_category_id === selectedArea.value) : [],
-)
+// Clicking the selected bubble again deselects it.
+function toggleProject(id: string) {
+    selectedProject.value = selectedProject.value === id ? '' : id
+}
 
-// Changing the area resets project + objective; changing the project reloads its
-// incomplete objectives.
-watch(selectedArea, () => {
-    selectedProject.value = ''
-    selectedObjective.value = ''
-    objectiveOptions.value = []
-})
+// Changing the project reloads its incomplete objectives (due date or not).
 watch(selectedProject, async (pid) => {
     selectedObjective.value = ''
     objectiveOptions.value = pid ? await getIncompleteObjectivesForProject(pid) : []
@@ -105,30 +97,29 @@ const onReorder = async (items: { id: string; order: number | null }[]) => {
     </div>
 
     <!-- Empty: pick a current objective. -->
-    <div v-else class="rounded-md bg-gray-300 text-black px-3 py-3 space-y-3">
-        <div class="flex flex-col md:flex-row gap-2">
-            <label class="flex-1">
-                <div class="text-sm">Project area</div>
-                <select v-model="selectedArea" class="border border-black rounded-md w-full bg-white px-1">
-                    <option value="">Select area</option>
-                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-                </select>
-            </label>
-            <label class="flex-1">
-                <div class="text-sm">Project</div>
-                <select v-model="selectedProject" :disabled="!selectedArea" class="border border-black rounded-md w-full bg-white px-1 disabled:opacity-50">
-                    <option value="">Select project</option>
-                    <option v-for="p in projectOptions" :key="p.id" :value="p.id">{{ p.name }}</option>
-                </select>
-            </label>
-            <label class="flex-1">
-                <div class="text-sm">Objective</div>
-                <select v-model="selectedObjective" :disabled="!selectedProject" class="border border-black rounded-md w-full bg-white px-1 disabled:opacity-50">
-                    <option value="">Select objective</option>
-                    <option v-for="o in objectiveOptions" :key="o.id" :value="o.id">{{ o.name }}</option>
-                </select>
-            </label>
+    <div v-else class="rounded-md bg-gray-100 text-black px-3 py-3 space-y-3">
+        <div>
+            <div class="text-sm mb-1">Project</div>
+            <div class="flex flex-wrap gap-2">
+                <button
+                    v-for="p in activeProjects"
+                    :key="p.id"
+                    type="button"
+                    class="w-fit px-2 py-1 rounded-lg border-2 border-dark cursor-pointer"
+                    :class="selectedProject === p.id ? 'bg-dark text-white!' : 'bg-light'"
+                    :data-model-theme="p.color_scheme ?? 'gray'"
+                    @click="toggleProject(p.id)"
+                >{{ p.name }}</button>
+                <p v-if="!activeProjects.length" class="italic text-sm">No active projects.</p>
+            </div>
         </div>
+        <label class="block">
+            <div class="text-sm">Objective</div>
+            <select v-model="selectedObjective" :disabled="!selectedProject" class="border border-black rounded-md w-full bg-white px-1 disabled:opacity-50">
+                <option value="">Select objective</option>
+                <option v-for="o in objectiveOptions" :key="o.id" :value="o.id">{{ o.name }}</option>
+            </select>
+        </label>
         <div class="flex gap-2">
             <button
                 :disabled="!selectedObjective"

@@ -96,7 +96,13 @@ const loadObjective = async (route: RouteLocationNormalized): Promise<{ objectiv
     return { objective }
 }
 
-export const objectiveShowController = defineController<{ objective: Objective | undefined }>(loadObjective)
+export const objectiveShowController = defineController<{ objective: Objective | undefined; isCurrent: boolean }>(
+    async (route: RouteLocationNormalized) => {
+        const id = route.params.id as string
+        const [objective, currentId] = await Promise.all([getObjective(id), getCurrentObjectiveId()])
+        return { objective, isCurrent: currentId === id }
+    },
+)
 export const objectiveEditController = defineController<{ objective: Objective | undefined }>(loadObjective)
 
 // ── Tasks ─────────────────────────────────────────────────────────────

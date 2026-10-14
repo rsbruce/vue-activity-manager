@@ -119,7 +119,7 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
 
 <template>
     <div class="space-y-4">
-        <CurrentObjective :objective="currentObjective" :categories="categories" :active-projects="activeProjects" />
+        <CurrentObjective :objective="currentObjective" :active-projects="activeProjects" />
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div class="space-y-4">
