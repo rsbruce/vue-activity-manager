@@ -15,6 +15,17 @@ export default defineConfig({
     vueDevTools(),
     tailwindcss(),
     {
+      // Prefix the tab title with "LOCAL" when running the dev server, so a dev
+      // tab is never mistaken for the real app. Builds (deployed web, Capacitor,
+      // the Docker preview) keep the plain title. Done in the HTML, not from JS,
+      // so the right title shows from first paint.
+      name: 'local-title',
+      apply: 'serve',
+      transformIndexHtml(html) {
+        return html.replace('<title>Activity Manager</title>', '<title>LOCAL Activity Manager</title>')
+      },
+    },
+    {
       // jeep-sqlite (the SQLite plugin's web fallback) fetches sql-wasm.wasm
       // from /assets/ at runtime. The wasm must come from the sql.js version
       // jeep-sqlite itself resolves to — its dist bundles the matching JS glue,

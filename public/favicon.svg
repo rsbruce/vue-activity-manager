@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- 2×2 of the app's theme colours (each theme's "intense" shade),
+       clockwise from top-left: emerald, amber, rose, purple. -->
+  <rect x="0"  y="0"  width="16" height="16" fill="#10b981"/>
+  <rect x="16" y="0"  width="16" height="16" fill="#f59e0b"/>
+  <rect x="16" y="16" width="16" height="16" fill="#f43f5e"/>
+  <rect x="0"  y="16" width="16" height="16" fill="#a855f7"/>
+</svg>

@@ -22,22 +22,7 @@ const completedObjectives = computed(() =>
     selectedWeek.value === 'this' ? props.completedThisWeek : props.completedLastWeek,
 )
 
-// "Later" objectives are those due next week or beyond (week offset >= 1),
-// hidden by default behind a show/hide strip so the agenda leads with now.
-const now = new Date()
-const daysSinceMonday = (now.getDay() + 6) % 7 // getDay(): Sun=0 … Sat=6
-const currentMonday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysSinceMonday)
-const todayIso = now.isoDate()
-const showLater = ref(false)
-
-// Whole-week offset of a due date from the current (Monday-start) week.
-function weekOffset(iso: string): number {
-    const [y, m, d] = iso.split('-').map(Number)
-    const date = new Date(y!, m! - 1, d!)
-    const since = (date.getDay() + 6) % 7
-    const monday = new Date(date.getFullYear(), date.getMonth(), date.getDate() - since)
-    return Math.round((monday.getTime() - currentMonday.getTime()) / (7 * 86_400_000))
-}
+const todayIso = new Date().isoDate()
 
 // Objectives with a due date, grouped by day (the list arrives ordered by
 // date), then by project within each day (themed by the project's category
@@ -73,26 +58,6 @@ const objectivesByDueDate = computed(() => {
     return groups
 })
 
-// The day-groups gathered into whole weeks (they arrive date-ordered, so a
-// week's days are contiguous). Weeks are the unit the show/hide strip gates on.
-type WeekGroup = { key: number; days: DateGroup[] }
-const objectivesByWeek = computed<WeekGroup[]>(() => {
-    const weeks: WeekGroup[] = []
-    for (const day of objectivesByDueDate.value) {
-        const key = weekOffset(day.date)
-        let week = weeks[weeks.length - 1]
-        if (!week || week.key !== key) {
-            week = { key, days: [] }
-            weeks.push(week)
-        }
-        week.days.push(day)
-    }
-    return weeks
-})
-
-// The first "later" week (next week or beyond), so the strip renders once above it.
-const firstLaterWeekKey = computed(() => objectivesByWeek.value.find((w) => w.key >= 1)?.key ?? null)
-
 // Objectives completed this week, grouped by project category (themed box each).
 const completedByCategory = computed(() => {
     const groups: CategoryGroup[] = []
@@ -121,51 +86,28 @@ async function onToggleObjective(id: string, nowComplete: boolean) {
     <div class="space-y-4">
         <CurrentObjective :objective="currentObjective" :active-projects="activeProjects" />
 
+        <hr class="border-gray-500" />
+
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
             <div class="space-y-4">
                 <h3 class="text-xl underline mb-4 mt-4">Agenda</h3>
-            <template v-for="week in objectivesByWeek" :key="week.key">
-                <!-- Strip once, immediately before the first "later" week. -->
-                <div
-                    v-if="week.key === firstLaterWeekKey"
-                    class="rounded-md bg-slate-700 text-white flex justify-between items-center px-3 py-2"
-                >
-                    <span>Later objectives</span>
-                    <div class="flex gap-2">
-                        <button
-                            type="button"
-                            class="px-3 py-0.5 rounded-md"
-                            :class="showLater ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'"
-                            @click="showLater = true"
-                        >show</button>
-                        <button
-                            type="button"
-                            class="px-3 py-0.5 rounded-md"
-                            :class="!showLater ? 'bg-sky-600 text-white' : 'bg-sky-200 text-black'"
-                            @click="showLater = false"
-                        >hide</button>
-                    </div>
+            <div v-for="group in objectivesByDueDate" :key="group.date">
+                <h3 class="font-semibold border-b flex justify-between items-baseline gap-2">
+                    <span>{{ group.label }}</span>
+                    <span class="text-sm font-normal" :class="{ 'text-red-500': group.date < todayIso }">{{ group.relative }}</span>
+                </h3>
+                <div class="space-y-1 mt-1">
+                    <CategoryObjectiveBox
+                        v-for="project in group.projects"
+                        :key="project.key"
+                        :name="project.name"
+                        :to="project.to"
+                        :color-scheme="project.color_scheme"
+                        :objectives="project.objectives"
+                        @toggle="onToggleObjective"
+                    />
                 </div>
-                <div v-if="week.key < 1 || showLater" class="space-y-2">
-                    <div v-for="group in week.days" :key="group.date">
-                        <h3 class="font-semibold border-b flex justify-between items-baseline gap-2">
-                            <span>{{ group.label }}</span>
-                            <span class="text-sm font-normal" :class="{ 'text-red-500': group.date < todayIso }">{{ group.relative }}</span>
-                        </h3>
-                        <div class="space-y-1 mt-1">
-                            <CategoryObjectiveBox
-                                v-for="project in group.projects"
-                                :key="project.key"
-                                :name="project.name"
-                                :to="project.to"
-                                :color-scheme="project.color_scheme"
-                                :objectives="project.objectives"
-                                @toggle="onToggleObjective"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </template>
+            </div>
             <p v-if="!objectivesByDueDate.length">No objectives with a due date.</p>
         </div>
 
