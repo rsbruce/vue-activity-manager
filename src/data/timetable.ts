@@ -6,6 +6,19 @@ import type {
     TimetableEvent,
 } from '@/types/events'
 import { getActiveProjectsWithArea } from './projects'
+import { startOfWeek } from './objectives'
+
+// The timetable's first visible day. With ?start=YYYY-MM-DD (written when you
+// navigate) it's that date; otherwise it's Monday of the current week, so landing
+// on the timetable shows this week. Anchored at 05:00 so the grid starts at a
+// sensible hour. Shared by the controller and the page so they always agree.
+export function timetableWindowStart(startParam?: unknown): Date {
+    const d = typeof startParam === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startParam)
+        ? new Date(`${startParam}T05:00:00`)
+        : startOfWeek(new Date())
+    d.setHours(5, 0, 0, 0)
+    return d
+}
 
 export type TimetableWindow = {
     timetable: TimetableData

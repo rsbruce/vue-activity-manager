@@ -7,7 +7,7 @@ import type {
 import type { Person } from '@/types/people'
 import type { Project } from '@/types/projects'
 import { useRoute, useRouter } from 'vue-router'
-import { getTimetableWindow, getSummary } from '@/data/timetable'
+import { getTimetableWindow, getSummary, timetableWindowStart } from '@/data/timetable'
 import DayNavigator from '../components/timetable/DayNavigator.vue'
 import TimetableGrid from '../components/timetable/TimetableGrid.vue'
 import CalendarGrid from '../components/timetable/CalendarGrid.vue'
@@ -57,21 +57,8 @@ watch(() => props.displayStart, v => { localDisplayStart.value = new Date(v) })
 const route = useRoute()
 const router = useRouter()
 
-const todayStartIso = (): string => {
-    const d = new Date()
-    d.setHours(5, 0, 0, 0)
-    return d.isoDate()
-}
-
-function windowStartFromRoute(): Date {
-    const q = route.query.start
-    const d = typeof q === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(q) ? new Date(`${q}T05:00:00`) : new Date()
-    d.setHours(5, 0, 0, 0)
-    return d
-}
-
 watch(() => route.query.start, async () => {
-    localDisplayStart.value = windowStartFromRoute()
+    localDisplayStart.value = timetableWindowStart(route.query.start)
     await loadWindow()
 })
 
@@ -93,14 +80,16 @@ async function loadSummary() {
 function navigate(offsetDays: number) {
     const next = localDisplayStart.value.addDays(offsetDays)
     // Advance the local start synchronously so rapid clicks accumulate (the query
-    // watch/URL settle a tick later). Back on today → drop the query so the URL
-    // stays clean and the controller defaults to today; otherwise pin ?start=.
+    // watch/URL settle a tick later). Back on the default (this week's Monday) →
+    // drop the query so the URL stays clean; otherwise pin ?start=.
     localDisplayStart.value = next
+    const isDefault = next.isoDate() === timetableWindowStart().isoDate()
     // replace, not push: a day/week scrubber shouldn't pile up history entries
     // (or make the back button walk them). The ?start= URL is still shareable.
-    router.replace({ query: next.isoDate() === todayStartIso() ? {} : { start: next.isoDate() } }).catch(() => {})
+    router.replace({ query: isDefault ? {} : { start: next.isoDate() } }).catch(() => {})
 }
 
+// "Today" returns to the landing view: the current week, starting Monday.
 function toToday() {
     if (route.query.start) router.replace({ query: {} }).catch(() => {})
 }
