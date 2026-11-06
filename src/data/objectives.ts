@@ -108,10 +108,10 @@ export async function getObjectivesCompletedInWeek(weekStart: Date): Promise<Cat
     )
 }
 
-export async function createObjective(input: { name: string; description?: string | null; project_id: string }): Promise<void> {
+export async function createObjective(input: { name: string; description?: string | null; project_id: string; due_date?: string | null }): Promise<void> {
     await exec(
-        'INSERT INTO objectives (name, description, project_id) VALUES (?, ?, ?)',
-        [input.name, input.description ?? null, input.project_id],
+        'INSERT INTO objectives (name, description, project_id, due_date) VALUES (?, ?, ?, ?)',
+        [input.name, input.description ?? null, input.project_id, input.due_date ?? null],
     )
 }
 

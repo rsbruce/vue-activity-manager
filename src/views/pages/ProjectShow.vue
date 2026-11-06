@@ -19,8 +19,8 @@ const objectivesWithChildren = computed(() =>
     (props.project.objectives ?? []).map((o) => ({ ...o, children: o.tasks })),
 )
 
-const onCreate = async (name: string) => {
-    await createObjective({ name, project_id: props.project.id })
+const onCreate = async (name: string, dueDate: string | null) => {
+    await createObjective({ name, project_id: props.project.id, due_date: dueDate })
     await refreshCurrent()
 }
 const onToggle = async ({ id, nowComplete }: { id: string; nowComplete: boolean }) => {
@@ -53,6 +53,7 @@ const onReorder = async (items: { id: string; order: number | null }[]) => {
                 title="Objectives"
                 base-path="objectives"
                 child-label="tasks"
+                with-due-date
                 :theme="project.project_area?.color_scheme"
                 @create="onCreate"
                 @toggle="onToggle"

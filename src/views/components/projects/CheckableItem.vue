@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { formatDueDate } from '@/utils/dueDate'
 
 const props = defineProps<{
     to: string
@@ -10,6 +11,7 @@ const props = defineProps<{
     childLabel?: string
     hasDescription?: boolean
     weekdayDate?: boolean
+    dueDate?: string | null
 }>()
 
 const emit = defineEmits<{ toggle: [nowComplete: boolean] }>()
@@ -44,6 +46,7 @@ const toggle = () => {
         />
         <RouterLink :to="to" class="font-semibold truncate min-w-0">{{ name }}
         <font-awesome-icon v-if="hasDescription" icon="file-lines" class="flex-none text-gray-700 text-sm" />
+        <font-awesome-icon v-if="dueDate" icon="clock" class="flex-none text-gray-700 text-sm" :title="`Due ${formatDueDate(dueDate)}`" />
         </RouterLink>
         <span v-if="completedAt" class="flex-1 text-right text-xs text-gray-500 whitespace-nowrap">
             {{ completedLabel }}

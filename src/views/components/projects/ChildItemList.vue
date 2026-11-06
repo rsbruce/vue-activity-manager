@@ -9,6 +9,7 @@ interface ChildItem {
     order: number | null
     completed_at: number | null
     has_description?: boolean
+    due_date?: string | null
     children?: Array<{ completed_at: number | null }>
 }
 
@@ -20,10 +21,12 @@ const props = defineProps<{
     theme?: string | null
     // 'stack' (default): incomplete over completed. 'row': side by side.
     layout?: 'stack' | 'row'
+    // Show a due date picker on the quick-add form.
+    withDueDate?: boolean
 }>()
 
 const emit = defineEmits<{
-    create: [string]
+    create: [name: string, dueDate: string | null]
     toggle: [{ id: string; nowComplete: boolean }]
     reorder: [{ id: string; order: number | null; name: string }[]]
 }>()
@@ -55,10 +58,12 @@ const incompleteChildCount = (item: ChildItem) =>
     item.children?.filter((c) => !c.completed_at).length ?? 0
 
 const name = ref('')
+const dueDate = ref('')
 const createItem = () => {
     if (!name.value.trim()) return
-    emit('create', name.value.trim())
+    emit('create', name.value.trim(), dueDate.value || null)
     name.value = ''
+    dueDate.value = ''
 }
 
 const modalOpen = ref(false)
@@ -74,8 +79,9 @@ const modalOpen = ref(false)
                 </div>
             </div>
             <form @submit.prevent="createItem">
-                <div class="flex gap-2">
-                    <input type="text" class="bg-white rounded-md flex-grow border border-black text-black px-1" v-model="name" />
+                <div :class="withDueDate ? 'flex flex-col sm:flex-row gap-2' : 'flex gap-2'">
+                    <input type="text" class="bg-white rounded-md flex-grow min-w-0 border border-black text-black px-1" v-model="name" />
+                    <input v-if="withDueDate" type="date" aria-label="Due date" class="bg-white rounded-md border border-black text-black px-1" v-model="dueDate" />
                     <button type="submit" class="bg-black px-2 rounded-md text-white">Add</button>
                 </div>
             </form>
@@ -90,6 +96,7 @@ const modalOpen = ref(false)
                     :total-tasks="item.children?.length ?? 0"
                     :child-label="childLabel"
                     :has-description="item.has_description"
+                    :due-date="item.due_date"
                     @toggle="(nowComplete) => emit('toggle', { id: item.id, nowComplete })"
                 />
                 <p v-if="!incompleteItems.length" class="italic">No {{ title.toLowerCase() }} yet.</p>
